@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <time.h>
 
 #include "binarySearchTree.h"
 
@@ -22,4 +24,16 @@ BinarySearchTree* add(BinarySearchTree* root, void* data, int (*compare) (void*,
     if (comparison < 0) root->left = add(root->left, data, compare);
 
     return root;
+}
+
+void search(BinarySearchTree* root, void* data, int (*compare) (void*, void*), int* numberOfComparisons) {
+    if (root == NULL) return;
+
+    (*numberOfComparisons)++;
+
+    int comparison = compare(data, root->data);
+
+    if (comparison == 0) return;
+    else if (comparison > 0) return search(root->right, data, compare, numberOfComparisons);
+    else return search(root->left, data, compare, numberOfComparisons);
 }
