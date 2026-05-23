@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "binarySearchTree.h"
-#include "comparisons.h"
+#include "avl.h"
 
 BinarySearchTree* fillRandomly(BinarySearchTree* root) {
     int poolSize = 30000, i;
@@ -18,11 +18,7 @@ BinarySearchTree* fillRandomly(BinarySearchTree* root) {
     for (i = 0; i < 30000; i++) {
         int randomIndex = rand() % poolSize;
 
-        int* number = malloc(sizeof(int));
-
-        *number = pool[randomIndex];
-
-        root = add(root, (void*) number, compareInt);
+        root = add(root, pool[randomIndex]);
 
         pool[randomIndex] = pool[--poolSize];
     }
@@ -35,21 +31,23 @@ BinarySearchTree* fillRandomly(BinarySearchTree* root) {
 BinarySearchTree* fillInOrder(BinarySearchTree* root)  {
     int i;
 
-    for (i = 0; i < 30000; i++) {
-        int* number = malloc(sizeof(int));
-
-        *number = i + 1;
-
-        root = add(root, (void*) number, compareInt);
-    }
+    for (i = 0; i < 30000; i++) root = add(root, i + 1);
 
     return root;
 }
 
-void extensiveSearch(BinarySearchTree* root) {
+AVL* fillAVL(AVL* root) {
+    int i;
+
+    for (i = 0; i < 30000; i++) root = addAVL(root, i + 1);
+
+    return root;
+}
+
+void extensiveSearch(BinarySearchTree* root, AVL* rootAVL) {
     FILE* file = fopen("Dados/data.csv", "w");
 
-    fprintf(file, "Number Searched;Comparisons\n");
+    fprintf(file, "Number Searched;Binary Search Tree;AVL\n");
 
     int poolSize = 30000, i;
 
@@ -63,10 +61,12 @@ void extensiveSearch(BinarySearchTree* root) {
         int randomIndex = rand() % poolSize;
 
         int numberOfComparisons = 0;
+        int numberOfComparisonsAVL = 0;
 
-        search(root, (void*) &pool[randomIndex], compareInt, &numberOfComparisons);
+        search(root, pool[randomIndex], &numberOfComparisons);
+        searchAVL(rootAVL, pool[randomIndex], &numberOfComparisonsAVL);
 
-        fprintf(file, "%d;%d\n", pool[randomIndex], numberOfComparisons);
+        fprintf(file, "%d;%d;%d\n", pool[randomIndex], numberOfComparisons, numberOfComparisonsAVL);
 
         pool[randomIndex] = pool[--poolSize];
     }
@@ -78,6 +78,7 @@ int main() {
     srand(time(NULL));
 
     BinarySearchTree* binarySearchTree = NULL;
+    AVL* avl = NULL;
 
     int i, input;
     
@@ -93,7 +94,9 @@ int main() {
     if (input == 1) binarySearchTree = fillInOrder(binarySearchTree);
     else if (input == 2) binarySearchTree = fillRandomly(binarySearchTree);
 
-    extensiveSearch(binarySearchTree);
+    avl = fillAVL(avl);
+
+    extensiveSearch(binarySearchTree, avl);
 
     return 0;
 }
