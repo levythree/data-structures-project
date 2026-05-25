@@ -22,12 +22,10 @@ BinarySearchTree* add(BinarySearchTree* root, int value) {
     return root;
 }
 
-void search(BinarySearchTree* root, int value, int* numberOfComparisons) {
-    if (root == NULL) return;
-
-    (*numberOfComparisons)++;
-
-    if (value == root->value) return;
-    else if (value > root->value) search(root->right, value, numberOfComparisons);
-    else search(root->left, value, numberOfComparisons);
+int search(BinarySearchTree* root, int value) {
+    if (root == NULL) return 1;
+    
+    if (value == root->value) return 1;
+    else if (value > root->value) return search(root->right, value) + 1;
+    else return search(root->left, value) + 1;
 }

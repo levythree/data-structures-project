@@ -22,4 +22,6 @@ int evaluateFormula(Formula* formula, int* interpretation);
 
 bool sat(Formula* formula, int* interpretation, int currentVariable);
 
+void printInterpretation(Formula* formula, int* interpretation);
+
 #endif

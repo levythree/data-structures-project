@@ -11,6 +11,6 @@ BinarySearchTree* createBinarySearchTree(int value);
 
 BinarySearchTree* add(BinarySearchTree* root, int value);
 
-void search(BinarySearchTree* root, int value, int* numberOfComparisons);
+int search(BinarySearchTree* root, int value);
 
 #endif

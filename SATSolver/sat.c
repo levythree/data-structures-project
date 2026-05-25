@@ -124,5 +124,13 @@ bool sat(Formula* formula, int* interpretation, int currentVariable) {
 void printInterpretation(Formula* formula, int* interpretation) {
     int i;
 
-    for (i = 1; i <= formula->numberOfVariables; i++) printf("x%d = %s\n", i, interpretation[i] == 1 ? "True" : "False");
+    for (i = 1; i <= formula->numberOfVariables; i++) {
+        printf("x%d = ", i);
+
+        if (interpretation[i] == 1) printf("True");
+        else if (interpretation[i] == -1) printf("False");
+        else printf("Any");
+
+        printf("\n");
+    }
 }

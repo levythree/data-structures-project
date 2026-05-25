@@ -24,6 +24,6 @@ AVL* rotateRight(AVL* node);
 
 AVL* addAVL(AVL* root, int value);
 
-void searchAVL(AVL* root, int value, int* numberOfComparisons);
+int searchAVL(AVL* root, int value);
 
 #endif

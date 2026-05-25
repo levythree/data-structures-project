@@ -89,12 +89,10 @@ AVL* addAVL(AVL* root, int value) {
     return root;
 }
 
-void searchAVL(AVL* root, int value, int* numberOfComparisons) {
-    if (root == NULL) return;
+int searchAVL(AVL* root, int value) {
+    if (root == NULL) return 1;
 
-    (*numberOfComparisons)++;
-
-    if (value == root->value) return;
-    else if (value < root->value) searchAVL(root->left, value, numberOfComparisons);
-    else searchAVL(root->right, value, numberOfComparisons);
+    if (value == root->value) return 1;
+    else if (value < root->value) return searchAVL(root->left, value) + 1;
+    else return searchAVL(root->right, value) + 1;
 }
