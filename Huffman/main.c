@@ -3,10 +3,12 @@
 
 #include "priorityQueue.h"
 #include "compare.h"
+#include "huffman.h"
 
 int main() {
-    PriorityQueue* priorityQueue = createPriorityQueue(compareInt);
+    PriorityQueue* priorityQueue = createPriorityQueue(compareHuffmanNodes);
 
+    /*
     int i;
 
     for (i = 0; i < 10; i++) {
@@ -38,6 +40,29 @@ int main() {
 
         current = current->next;
     }
+    */
+
+    void* huff1 = createHuffmanNode('D', 3);
+    void* huff2 = createHuffmanNode('B', 5);
+    void* huff3 = createHuffmanNode('A', 6);
+    void* huff4 = createHuffmanNode('F', 1);
+    void* huff5 = createHuffmanNode('E', 2);
+    void* huff6 = createHuffmanNode('C', 4);
+
+    enqueue(priorityQueue, huff1);
+    enqueue(priorityQueue, huff2);
+    enqueue(priorityQueue, huff3);
+    enqueue(priorityQueue, huff4);
+    enqueue(priorityQueue, huff5);
+    enqueue(priorityQueue, huff6);
+
+    Huffman* root = createHuffmanTree(priorityQueue);
+
+    printPreOrderFrequencies(root);
+
+    printf("\n");
+
+    printPreOrderCharacters(root);
 
     return 0;
 }
