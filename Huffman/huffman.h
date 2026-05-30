@@ -1,6 +1,8 @@
 #ifndef huffmanH
 #define huffmanH
 
+#include <stdbool.h>
+
 #include "priorityQueue.h"
 
 typedef struct huffman {
@@ -8,14 +10,23 @@ typedef struct huffman {
     int frequency;
     struct huffman* left;
     struct huffman* right;
-} Huffman;
+} HuffmanNode;
 
-Huffman* createHuffmanNode(unsigned char character, int frequency);
+typedef struct {
+    char bits[256];
+    int length;
+} HuffmanCode;
 
-Huffman* createHuffmanTree(PriorityQueue* priorityQueue);
+HuffmanNode* createHuffmanNode(unsigned char character, int frequency);
 
-void printPreOrderFrequencies(Huffman* huffman);
+HuffmanNode* createHuffmanTree(PriorityQueue* priorityQueue);
 
-void printPreOrderCharacters(Huffman* huffman);
+bool isLeaf(HuffmanNode* node);
+
+void generateDictionary(HuffmanNode* node, char* path, int depth, HuffmanCode* dictionary);
+
+void printPreOrderFrequencies(HuffmanNode* huffman);
+
+void printPreOrderCharacters(HuffmanNode* huffman);
 
 #endif

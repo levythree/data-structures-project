@@ -56,13 +56,35 @@ int main() {
     enqueue(priorityQueue, huff5);
     enqueue(priorityQueue, huff6);
 
-    Huffman* root = createHuffmanTree(priorityQueue);
+    HuffmanNode* root = createHuffmanTree(priorityQueue);
 
     printPreOrderFrequencies(root);
 
     printf("\n");
 
     printPreOrderCharacters(root);
+
+    printf("\n");
+
+    HuffmanCode* code = (HuffmanCode*) malloc(256 * sizeof(HuffmanCode));
+
+    int i, j;
+
+    for (i = 0; i < 256; i++) code[i].length = 0;
+
+    char* path = (char*) malloc(256 * sizeof(char));
+
+    generateDictionary(root, path, 0, code);
+
+    for (i = 0; i < 256; i++) {
+        if (code[i].length > 0) {
+            printf("%c: ", i);
+
+            for (j = 0; j < code[i].length; j++) printf("%c", code[i].bits[j]);
+
+            printf("\n");
+        }
+    }
 
     return 0;
 }

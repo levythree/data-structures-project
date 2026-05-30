@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "priorityQueue.h"
+#include "huffman.h"
 
 PriorityQueueNode* createPriorityQueueNode(void* data) {
     PriorityQueueNode* priorityQueueNode = (PriorityQueueNode*) malloc(sizeof(PriorityQueueNode));
