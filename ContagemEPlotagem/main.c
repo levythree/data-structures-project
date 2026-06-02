@@ -5,19 +5,22 @@
 
 #include "binarySearchTree.h"
 #include "avl.h"
+#include "sort.h"
+
+#define MAX 32767
 
 BinarySearchTree* fillBinarySearchTree() {
     BinarySearchTree* binarySearchTree = NULL;
 
-    int poolSize = 30000, i;
+    int poolSize = MAX + 1, i;
 
-    int* pool = malloc(poolSize * sizeof(int));
+    int* pool = (int*) malloc(poolSize * sizeof(int));
 
-    for (i = 0; i < poolSize; i++) {
-        pool[i] = i + 1;
+    for (i = 0; i <= poolSize; i++) {
+        pool[i] = i;
     }
 
-    for (i = 0; i < 30000; i++) {
+    for (i = 0; i <= MAX; i++) {
         int randomIndex = rand() % poolSize;
 
         binarySearchTree = add(binarySearchTree, pool[randomIndex]);
@@ -35,7 +38,7 @@ AVL* fillAVL() {
 
     int i;
 
-    for (i = 0; i < 30000; i++) avl = addAVL(avl, i + 1);
+    for (i = 0; i <= MAX; i++) avl = addAVL(avl, i);
 
     return avl;
 }
@@ -45,21 +48,20 @@ void extensiveSearch(BinarySearchTree* binarySearchTree, AVL* avl) {
 
     fprintf(file, "Number Searched;Binary Search Tree;AVL\n");
 
-    int poolSize = 30000, i;
+    int* sortedBinarySearchTree = (int*) malloc((MAX + 1) * sizeof(int));
+    int* sortedAVL = (int*) malloc((MAX + 1) * sizeof(int));
 
-    int* pool = malloc(poolSize * sizeof(int));
+    int i;
 
-    for (i = 0; i < poolSize; i++) pool[i] = i + 1;
-
-    for (i = 0; i < 30000; i++) {
-        int randomIndex = rand() % poolSize;
-
-        fprintf(file, "%d;%d;%d\n", pool[randomIndex], search(binarySearchTree, pool[randomIndex]), searchAVL(avl, pool[randomIndex]));
-
-        pool[randomIndex] = pool[--poolSize];
+    for (i = 0; i <= MAX; i++) {
+        sortedBinarySearchTree[i] = search(binarySearchTree, i);
+        sortedAVL[i] = searchAVL(avl, i);
     }
 
-    free(pool);
+    quickSort(sortedBinarySearchTree, MAX + 1);
+    quickSort(sortedAVL, MAX + 1);
+
+    for (i = 0; i <= MAX; i++) fprintf(file, "%d;%d;%d\n", i, sortedBinarySearchTree[i], sortedAVL[i]);
 }
 
 int main() {

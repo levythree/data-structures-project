@@ -1,9 +1,9 @@
-mydata <- read.csv2("C:/Users/jadis/Documents/UFAL/data-structures-project/ContagemEPlotagem/Dados/data.csv")
+data <- read.csv2("C:/Users/jadis/Documents/UFAL/data-structures-project/ContagemEPlotagem/Dados/data.csv")
 
-sortedBinarySearchTree <- sort(mydata$Binary.Search.Tree)
-sortedAVL <- sort(mydata$AVL)
+binarySearchTree <- data$Binary.Search.Tree
+avl <- data$AVL
 
-plot(sortedBinarySearchTree,
+plot(binarySearchTree,
      type = "l",
      lwd = 2,
      col = "tomato",
@@ -11,7 +11,7 @@ plot(sortedBinarySearchTree,
      xlab = "Tamanho do Problema",
      ylab = "Número de Comparações")
 
-lines(sortedAVL,
+lines(avl,
       col = "steelblue",
       lwd = 2)
 
