@@ -23,10 +23,10 @@ HuffmanNode* createHuffmanTree(PriorityQueue* priorityQueue);
 
 bool isLeaf(HuffmanNode* node);
 
+int getTreeSize(HuffmanNode* root);
+
 void generateDictionary(HuffmanNode* node, char* path, int depth, HuffmanCode* dictionary);
 
-void printPreOrderFrequencies(HuffmanNode* huffman);
-
-void printPreOrderCharacters(HuffmanNode* huffman);
+void freeHuffmanTree(HuffmanNode* root);
 
 #endif

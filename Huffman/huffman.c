@@ -35,6 +35,14 @@ bool isLeaf(HuffmanNode* node) {
     return node->left == NULL && node->right == NULL;
 }
 
+int getTreeSize(HuffmanNode* root) {
+    if (root == NULL) return 0;
+
+    if (isLeaf(root) && (root->character == '*' || root->character == '\\')) return 2;
+
+    return 1 + getTreeSize(root->left) + getTreeSize(root->right);
+}
+
 void generateDictionary(HuffmanNode* node, char* path, int depth, HuffmanCode* dictionary) {
     if (node == NULL) return;
 
@@ -57,20 +65,10 @@ void generateDictionary(HuffmanNode* node, char* path, int depth, HuffmanCode* d
     generateDictionary(node->right, path, depth + 1, dictionary);
 }
 
-void printPreOrderFrequencies(HuffmanNode* node) {
-    if (node != NULL) {
-        printf("%d ", node->frequency);
-        printPreOrderFrequencies(node->left);
-        printPreOrderFrequencies(node->right);
-    }
-}
-
-void printPreOrderCharacters(HuffmanNode* node) {
-    if (node != NULL) {
-        if (isLeaf(node) && (node->character == '*' || node->character == '\\')) printf("\\%c", node->character);
-        else printf("%c", node->character);
-        
-        printPreOrderCharacters(node->left);
-        printPreOrderCharacters(node->right);
+void freeHuffmanTree(HuffmanNode* root) {
+    if (root != NULL) {
+        freeHuffmanTree(root->left);
+        freeHuffmanTree(root->right);
+        free(root);
     }
 }

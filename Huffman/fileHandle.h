@@ -9,6 +9,8 @@
 
 int getNextBit(FILE* file);
 
+void writeBit(FILE* file, int bit);
+
 void writeTree(FILE* file, HuffmanNode* root);
 
 HuffmanNode* rebuildTree(FILE* file);
@@ -16,5 +18,9 @@ HuffmanNode* rebuildTree(FILE* file);
 void getFrequencies(const char* fileName, int* frequencies);
 
 void fillPriorityQueue(PriorityQueue* priorityQueue, int* frequencies);
+
+void compressFile(const char* inputFileName, const char* outputFileName);
+
+void decompressFile(const char* inputFileName, const char* outputFileName);
 
 #endif
