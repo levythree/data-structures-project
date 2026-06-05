@@ -25,6 +25,17 @@ Formula* createFormula(int numberOfVariables, int numberOfClauses) {
     return formula;
 }
 
+SATNode* createSATNode(int variableId, int valueAssigned) {
+    SATNode* satNode = (SATNode*) malloc(sizeof(SATNode));
+
+    satNode->variableId = variableId;
+    satNode->valueAssigned = valueAssigned;
+    satNode->left = NULL;
+    satNode->right = NULL;
+
+    return satNode;
+}
+
 Formula* readCnf(const char* fileName) {
     FILE* cnf = fopen(fileName, "r");
 
@@ -102,7 +113,7 @@ int evaluateFormula(Formula* formula, int* interpretation) {
     return 0;
 }
 
-bool sat(Formula* formula, int* interpretation, int currentVariable) {
+bool sat(Formula* formula, int* interpretation, int currentVariable, SATNode** satNode) {
     int status = evaluateFormula(formula, interpretation);
 
     if (status == 1) return true;
@@ -110,27 +121,29 @@ bool sat(Formula* formula, int* interpretation, int currentVariable) {
 
     if (currentVariable > formula->numberOfVariables) return false;
 
+    *satNode = createSATNode(currentVariable, 0);
+
     interpretation[currentVariable] = 1;
-    if (sat(formula, interpretation, currentVariable + 1)) return true;
+    (*satNode)->valueAssigned = 1;
+    if (sat(formula, interpretation, currentVariable + 1, &((*satNode)->left))) return true;
 
     interpretation[currentVariable] = -1;
-    if (sat(formula, interpretation, currentVariable + 1)) return true;
+    (*satNode)->valueAssigned = -1;
+    if (sat(formula, interpretation, currentVariable + 1, &((*satNode)->right))) return true;
 
     interpretation[currentVariable] = 0;
+    free(*satNode);
+    (*satNode) = NULL;
     
     return false;
 }
 
-void printInterpretation(Formula* formula, int* interpretation) {
-    int i;
+void printSATTree(SATNode* satNode) {
+    if (satNode == NULL) return;
 
-    for (i = 1; i <= formula->numberOfVariables; i++) {
-        printf("x%d = ", i);
+    if (satNode->valueAssigned == 1) printf("x%d: True\n", satNode->variableId);
+    else if (satNode->valueAssigned == -1) printf("x%d: False\n", satNode->variableId);
 
-        if (interpretation[i] == 1) printf("True");
-        else if (interpretation[i] == -1) printf("False");
-        else printf("Any");
-
-        printf("\n");
-    }
+    printSATTree(satNode->left);
+    printSATTree(satNode->right);
 }

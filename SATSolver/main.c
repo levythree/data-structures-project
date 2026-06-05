@@ -5,15 +5,17 @@
 
 #include "sat.h"
 
-int main() {
-    Formula* formula = readCnf("formula.cnf");
+int main(int numberOfArguments, char** arguments) {
+    Formula* formula = readCnf(arguments[1]);
 
     int* interpretation = (int*) calloc((formula->numberOfVariables + 1), sizeof(int));
 
-    if (sat(formula, interpretation, 1)) {
+    SATNode* satNode = NULL;
+
+    if (sat(formula, interpretation, 1, &satNode)) {
         printf("SAT!\n");
 
-        printInterpretation(formula, interpretation);
+        printSATTree(satNode);
     } else printf("UNSAT!\n");
 
     return 0;
