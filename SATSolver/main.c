@@ -6,6 +6,12 @@
 #include "sat.h"
 
 int main(int numberOfArguments, char** arguments) {
+    if (numberOfArguments != 2) {
+        printf("Usage: ./main <fileName>\n");
+
+        return 1;
+    }
+
     Formula* formula = readCnf(arguments[1]);
 
     int* interpretation = (int*) calloc((formula->numberOfVariables + 1), sizeof(int));
