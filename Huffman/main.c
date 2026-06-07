@@ -9,7 +9,7 @@
 
 int main(int numberOfArguments, char** arguments) {
     if (numberOfArguments != 4) {
-        printf("Usage: ./main <compress>|<decompress> <inputFileName> <outputFileName> \n");
+        printf("Usage: ./main <compress>|<decompress> <inputFileName> <outputFileName>\n");
 
         return 1;
     }
