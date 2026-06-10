@@ -69,9 +69,7 @@ int lexerPeekChar(FILE* file) {
         break;
     }
 
-    if (character != EOF) {
-        ungetc(character, file);
-    }
+    if (character != EOF) ungetc(character, file);
 
     return character;
 }
@@ -141,7 +139,7 @@ void printInOrder(ASTNode* tree, int depth) {
     printInOrder(tree->left, depth + 1);
 }
 
-void parseSMTFile(FILE* file) {
+void parseSMTFile(FILE* file, ASTNode** array, int* counter) {
     char token[32];
 
     while (lexerNextToken(file, token)) {
@@ -165,7 +163,7 @@ void parseSMTFile(FILE* file) {
 
                 ASTNode* tree = binaryTreeParser(file);
 
-                printInOrder(tree, 0);
+                array[(*counter)++] = tree;
 
                 printf(
                     "[Gerenciador] Árvore do assert construída com sucesso!\n");
@@ -190,15 +188,31 @@ void parseSMTFile(FILE* file) {
     }
 }
 
+int smt(ASTNode** array, int size) {
+    for (int i = 0; i < size; i++) {
+        }
+
+    return 1;
+}
+
 int main() {
     FILE* file = fopen("./file.smt2", "r");
+    ASTNode** array = malloc(10 * sizeof(ASTNode));
+    int counter = 0;
 
     if (file == NULL) {
         perror("Erro ao abrir o arquivo");
         return 1;
     }
 
-    parseSMTFile(file);
+    parseSMTFile(file, array, &counter);
+
+    printf("%d\n", counter);
+
+    if (smt(array, counter))
+        printf("SAT\n");
+    else
+        printf("UNSAT\n");
 
     fclose(file);
 

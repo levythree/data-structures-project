@@ -1,52 +1,52 @@
+#include "lia.h"
+
+#include <float.h>
+#include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
-#include <math.h>
-#include <float.h>
 
-#include "lia.h"
 #include "simplex.h"
 
 /* ------------------------------------------------------------------ */
 /* Constantes                                                           */
 /* ------------------------------------------------------------------ */
 
-#define LIA_EPSILON   1e-6   /* tolerância para verificar inteireza    */
+#define LIA_EPSILON 1e-6     /* tolerância para verificar inteireza    */
 #define LIA_MAX_NODES 100000 /* limite de nós para evitar loops inf.   */
 
 /* ------------------------------------------------------------------ */
 /* LIAProblem — criação e liberação                                     */
 /* ------------------------------------------------------------------ */
 
-LIAProblem* createLIAProblem(int variables, int equations,
-                             double* obj,
+LIAProblem* createLIAProblem(int variables, int equations, double* obj,
                              double** A, double* b) {
-    LIAProblem* lia = (LIAProblem*) malloc(sizeof(LIAProblem));
+    LIAProblem* lia = (LIAProblem*)malloc(sizeof(LIAProblem));
 
-    lia->variables  = variables;
-    lia->equations  = equations;
+    lia->variables = variables;
+    lia->equations = equations;
 
     /* Copia obj */
     if (obj != NULL) {
-        lia->obj = (double*) malloc(variables * sizeof(double));
+        lia->obj = (double*)malloc(variables * sizeof(double));
         memcpy(lia->obj, obj, variables * sizeof(double));
     } else {
         lia->obj = NULL;
     }
 
     /* Copia A */
-    lia->A = (double**) malloc(equations * sizeof(double*));
+    lia->A = (double**)malloc(equations * sizeof(double*));
     int i, j;
     for (i = 0; i < equations; i++) {
-        lia->A[i] = (double*) malloc(variables * sizeof(double));
+        lia->A[i] = (double*)malloc(variables * sizeof(double));
         for (j = 0; j < variables; j++) {
             lia->A[i][j] = A[i][j];
         }
     }
 
     /* Copia b */
-    lia->b = (double*) malloc(equations * sizeof(double));
+    lia->b = (double*)malloc(equations * sizeof(double));
     memcpy(lia->b, b, equations * sizeof(double));
 
     return lia;
@@ -66,11 +66,11 @@ void freeLIAProblem(LIAProblem* lia) {
 /* ------------------------------------------------------------------ */
 
 static BBNode* createBBNode(int capacity) {
-    BBNode* node     = (BBNode*) malloc(sizeof(BBNode));
-    node->numBounds  = 0;
-    node->varIndex   = (int*)    malloc(capacity * sizeof(int));
-    node->direction  = (int*)    malloc(capacity * sizeof(int));
-    node->bound      = (double*) malloc(capacity * sizeof(double));
+    BBNode* node = (BBNode*)malloc(sizeof(BBNode));
+    node->numBounds = 0;
+    node->varIndex = (int*)malloc(capacity * sizeof(int));
+    node->direction = (int*)malloc(capacity * sizeof(int));
+    node->bound = (double*)malloc(capacity * sizeof(double));
     return node;
 }
 
@@ -86,21 +86,21 @@ static void freeBBNode(BBNode* node) {
  * direction == -1  =>  x_varIdx <= bound  (ramo esquerdo / floor)
  * direction == +1  =>  x_varIdx >= bound  (ramo direito  / ceil)
  */
-static BBNode* cloneAndAddBound(BBNode* parent,
-                                int varIdx, int direction, double bound) {
-    int n        = parent->numBounds;
+static BBNode* cloneAndAddBound(BBNode* parent, int varIdx, int direction,
+                                double bound) {
+    int n = parent->numBounds;
     BBNode* node = createBBNode(n + 1);
     node->numBounds = n + 1;
 
     if (n > 0) {
-        memcpy(node->varIndex,  parent->varIndex,  n * sizeof(int));
+        memcpy(node->varIndex, parent->varIndex, n * sizeof(int));
         memcpy(node->direction, parent->direction, n * sizeof(int));
-        memcpy(node->bound,     parent->bound,     n * sizeof(double));
+        memcpy(node->bound, parent->bound, n * sizeof(double));
     }
 
-    node->varIndex [n] = varIdx;
+    node->varIndex[n] = varIdx;
     node->direction[n] = direction;
-    node->bound    [n] = bound;
+    node->bound[n] = bound;
 
     return node;
 }
@@ -123,7 +123,7 @@ static BBNode* cloneAndAddBound(BBNode* parent,
  */
 Tableau* buildLIATableau(LIAProblem* lia, BBNode* node) {
     int totalEquations = lia->equations + node->numBounds;
-    Tableau* tableau   = createTableau(lia->variables, totalEquations);
+    Tableau* tableau = createTableau(lia->variables, totalEquations);
 
     int i, j;
 
@@ -140,21 +140,21 @@ Tableau* buildLIATableau(LIAProblem* lia, BBNode* node) {
 
     /* --- Restrições de branching --- */
     for (i = 0; i < node->numBounds; i++) {
-        int   row = lia->equations + i;
-        int   v   = node->varIndex [i];
-        int   dir = node->direction[i];
-        double bnd = node->bound   [i];
+        int row = lia->equations + i;
+        int v = node->varIndex[i];
+        int dir = node->direction[i];
+        double bnd = node->bound[i];
 
         if (dir == -1) {
             /* x_v <= bnd  =>  x_v + s = bnd */
-            tableau->matrix[row][v]                       = 1.0;
-            tableau->matrix[row][lia->variables + row]    = 1.0;
-            tableau->matrix[row][tableau->columns - 1]    = bnd;
+            tableau->matrix[row][v] = 1.0;
+            tableau->matrix[row][lia->variables + row] = 1.0;
+            tableau->matrix[row][tableau->columns - 1] = bnd;
         } else {
             /* x_v >= bnd  =>  -x_v + s = -bnd */
-            tableau->matrix[row][v]                       = -1.0;
-            tableau->matrix[row][lia->variables + row]    = 1.0;
-            tableau->matrix[row][tableau->columns - 1]    = -bnd;
+            tableau->matrix[row][v] = -1.0;
+            tableau->matrix[row][lia->variables + row] = 1.0;
+            tableau->matrix[row][tableau->columns - 1] = -bnd;
         }
     }
 
@@ -177,15 +177,19 @@ Tableau* buildLIATableau(LIAProblem* lia, BBNode* node) {
 /* ------------------------------------------------------------------ */
 
 static double* extractLPSolution(Tableau* tableau, int variables) {
-    double* sol = (double*) calloc(variables, sizeof(double));
+    double* sol = (double*)calloc(variables, sizeof(double));
     int i, j;
 
     for (j = 0; j < variables; j++) {
         int zeroCount = 0, oneCount = 0, rowWithOne = -1;
 
         for (i = 0; i < tableau->rows; i++) {
-            if      (fabs(tableau->matrix[i][j] - 0.0) < LIA_EPSILON) zeroCount++;
-            else if (fabs(tableau->matrix[i][j] - 1.0) < LIA_EPSILON) { oneCount++; rowWithOne = i; }
+            if (fabs(tableau->matrix[i][j] - 0.0) < LIA_EPSILON)
+                zeroCount++;
+            else if (fabs(tableau->matrix[i][j] - 1.0) < LIA_EPSILON) {
+                oneCount++;
+                rowWithOne = i;
+            }
         }
 
         if (oneCount == 1 && zeroCount == tableau->rows - 1)
@@ -215,10 +219,10 @@ int firstFractional(double* solution, int variables) {
 /* ------------------------------------------------------------------ */
 
 typedef struct {
-    bool    found;
+    bool found;
     double* bestSolution;
-    double  bestObj;
-    int     nodesExplored;
+    double bestObj;
+    int nodesExplored;
 } BBState;
 
 static void bbSolve(LIAProblem* lia, BBNode* node, BBState* state) {
@@ -227,7 +231,7 @@ static void bbSolve(LIAProblem* lia, BBNode* node, BBState* state) {
 
     /* 1. Resolve a relaxação LP do nó atual */
     Tableau* tableau = buildLIATableau(lia, node);
-    bool feasible    = simplex(tableau);
+    bool feasible = simplex(tableau);
 
     if (!feasible) {
         /* Nó inviável: poda por inviabilidade */
@@ -242,8 +246,7 @@ static void bbSolve(LIAProblem* lia, BBNode* node, BBState* state) {
     if (lia->obj != NULL && state->found) {
         double objLP = 0.0;
         int j;
-        for (j = 0; j < lia->variables; j++)
-            objLP += lia->obj[j] * lpSol[j];
+        for (j = 0; j < lia->variables; j++) objLP += lia->obj[j] * lpSol[j];
 
         if (objLP >= state->bestObj - LIA_EPSILON) {
             /* LP relaxação não melhora o melhor inteiro conhecido: poda */
@@ -271,7 +274,7 @@ static void bbSolve(LIAProblem* lia, BBNode* node, BBState* state) {
             state->found = true;
             if (state->bestSolution) free(state->bestSolution);
             state->bestSolution = lpSol;
-            state->bestObj      = objVal;
+            state->bestObj = objVal;
         } else {
             free(lpSol);
         }
@@ -284,7 +287,7 @@ static void bbSolve(LIAProblem* lia, BBNode* node, BBState* state) {
     free(lpSol);
 
     double floorVal = floor(fracVal);
-    double ceilVal  = ceil (fracVal);
+    double ceilVal = ceil(fracVal);
 
     /* Ramo esquerdo:  x_fracVar <= floor(fracVal) */
     BBNode* leftNode = cloneAndAddBound(node, fracVar, -1, floorVal);
@@ -303,26 +306,26 @@ static void bbSolve(LIAProblem* lia, BBNode* node, BBState* state) {
 
 BBResult solveLIA(LIAProblem* lia) {
     BBResult result;
-    result.sat          = false;
-    result.solution     = NULL;
-    result.objValue     = 0.0;
+    result.sat = false;
+    result.solution = NULL;
+    result.objValue = 0.0;
     result.nodesExplored = 0;
 
     /* Nó raiz: sem restrições de branching */
     BBNode* root = createBBNode(1);
 
     BBState state;
-    state.found        = false;
+    state.found = false;
     state.bestSolution = NULL;
-    state.bestObj      = DBL_MAX;
+    state.bestObj = DBL_MAX;
     state.nodesExplored = 0;
 
     bbSolve(lia, root, &state);
     freeBBNode(root);
 
-    result.sat           = state.found;
-    result.solution      = state.bestSolution;
-    result.objValue      = state.bestObj;
+    result.sat = state.found;
+    result.solution = state.bestSolution;
+    result.objValue = state.bestObj;
     result.nodesExplored = state.nodesExplored;
 
     return result;
@@ -347,6 +350,5 @@ void printLIAResult(LIAProblem* lia, BBResult* result) {
     for (j = 0; j < lia->variables; j++)
         printf("  x%d = %.0f\n", j + 1, result->solution[j]);
 
-    if (lia->obj != NULL)
-        printf("Valor objetivo: %.6f\n", result->objValue);
+    if (lia->obj != NULL) printf("Valor objetivo: %.6f\n", result->objValue);
 }
