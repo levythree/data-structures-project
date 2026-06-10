@@ -50,81 +50,28 @@ bool simplex(Tableau* tableau) {
         int i, j;
         int pivotColumn = -1;
         int pivotRow = -1;
-        double lowest = 0.0;
+        double mostNegative = 0.0;
 
         for (i = 0; i < tableau->rows - 1; i++) {
-            if (tableau->matrix[i][tableau->columns - 1] < 0) {
-                bool canBeFixed = false;
+            if (tableau->matrix[i][tableau->columns - 1] < mostNegative) {
+                mostNegative = tableau->matrix[i][tableau->columns - 1];
 
-                for (j = 0; j < tableau->columns - 1; j++) {
-                    if (tableau->matrix[i][j] < 0) {
-                        canBeFixed = true;
-
-                        break;
-                    }
-                }
-
-                if (!canBeFixed) return false;
-            }
-        }
-
-        for (j = 0; j < tableau->columns - 1; j++) {
-            if (tableau->matrix[tableau->rows - 1][j] < lowest) {
-                lowest = tableau->matrix[tableau->rows - 1][j];
-
-                pivotColumn = j;
-            }
-        }
-
-        if (lowest >= 0.0) return true;
-
-        double minimunRatio = -1.0;
-        
-        for (i = 0; i < tableau->rows - 1; i++) {
-            double columnValue = tableau->matrix[i][pivotColumn];
-            double constantValue = tableau->matrix[i][tableau->columns - 1];
-
-            if (columnValue > 0) {
-                double ratio = constantValue / columnValue;
-
-                if (minimunRatio == -1.0 || ratio < minimunRatio) {
-                    minimunRatio = ratio;
-
-                    pivotRow = i;
-                }
+                pivotRow = i;
             }
         }
 
         if (pivotRow == -1) return true;
 
-        pivot(tableau, pivotRow, pivotColumn);
-    }
-}
+        for (j = 0; j < tableau->columns - 1; j++) {
+            if (tableau->matrix[pivotRow][j] < 0.0) {
+                pivotColumn = j;
 
-void printSolution(Tableau* tableau) {
-    printf("Variables:\n");
-
-    int i, j;
-
-    for (j = 0; j < tableau->columns - 1; j++) {
-        int zeroCount = 0, oneCount = 0, rowWithTheOne = -1;
-
-        for (i = 0; i < tableau->rows; i++) {
-            if (tableau->matrix[i][j] == 0.0) zeroCount++;
-            else if (tableau->matrix[i][j] == 1.0) {
-                oneCount++;
-
-                rowWithTheOne = i;
+                break;
             }
         }
 
-        double value = 0.0;
+        if (pivotColumn == -1) return false;
 
-        if (oneCount == 1 && zeroCount == tableau->rows - 1) {
-            value = tableau->matrix[rowWithTheOne][tableau->columns - 1];
-        }
-
-        if (j < tableau->variables) printf("x%d = %.2lf\n", j + 1, value);
-        else printf("s%d = %.2lf\n", (j - tableau->variables) + 1, value);
+        pivot(tableau, pivotRow, pivotColumn);
     }
 }
