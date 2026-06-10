@@ -17,6 +17,4 @@ void pivot(Tableau* tableau, int pivotRow, int pivotColumn);
 
 bool simplex(Tableau* tableau);
 
-void printSolution(Tableau* tableau);
-
 #endif
