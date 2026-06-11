@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #ifndef liaH
 #define liaH
 

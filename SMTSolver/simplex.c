@@ -1,21 +1,22 @@
+#include "./types/simplex.h"
+
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-
-#include "simplex.h"
 
 Tableau* createTableau(int variables, int equations) {
-    Tableau* tableau = (Tableau*) malloc(sizeof(Tableau));
+    Tableau* tableau = (Tableau*)malloc(sizeof(Tableau));
 
     tableau->variables = variables;
     tableau->equations = equations;
     tableau->rows = equations + 1;
     tableau->columns = variables + equations + 1;
-    tableau->matrix = (double**) malloc(tableau->rows * sizeof(double*));
+    tableau->matrix = (double**)malloc(tableau->rows * sizeof(double*));
 
     int i;
 
-    for (i = 0; i < tableau->rows; i++) tableau->matrix[i] = (double*) calloc(tableau->columns, sizeof(double));
+    for (i = 0; i < tableau->rows; i++)
+        tableau->matrix[i] = (double*)calloc(tableau->columns, sizeof(double));
 
     return tableau;
 }
@@ -34,13 +35,15 @@ void pivot(Tableau* tableau, int pivotRow, int pivotColumn) {
 
     int i, j;
 
-    for (j = 0; j < tableau->columns; j++) tableau->matrix[pivotRow][j] /= pivotValue;
+    for (j = 0; j < tableau->columns; j++)
+        tableau->matrix[pivotRow][j] /= pivotValue;
 
     for (i = 0; i < tableau->rows; i++) {
         if (i != pivotRow) {
             double factor = tableau->matrix[i][pivotColumn];
 
-            for (j = 0; j < tableau->columns; j++) tableau->matrix[i][j] -= factor * tableau->matrix[pivotRow][j];
+            for (j = 0; j < tableau->columns; j++)
+                tableau->matrix[i][j] -= factor * tableau->matrix[pivotRow][j];
         }
     }
 }
