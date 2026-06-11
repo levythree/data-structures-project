@@ -16,7 +16,8 @@ typedef enum {
     NODE_OP_SUB,
     NODE_OP_EQ,
     NODE_OP_LE,
-    NODE_OP_GE
+    NODE_OP_GE,
+    NODE_OP_MUL
 } NodeType;
 
 typedef struct ASTNode {
@@ -108,11 +109,12 @@ ASTNode* createNode(NodeType type, const char* token) {
 }
 
 NodeType getNodeType(char* token) {
-    if (strcmp(token, "+") == 0) return NODE_OP_ADD;
-    if (strcmp(token, "-") == 0) return NODE_OP_SUB;
-    if (strcmp(token, "=") == 0) return NODE_OP_EQ;
-    if (strcmp(token, "<=") == 0) return NODE_OP_LE;
-    if (strcmp(token, ">=") == 0) return NODE_OP_GE;
+    if (!strcmp(token, "+")) return NODE_OP_ADD;
+    if (!strcmp(token, "-")) return NODE_OP_SUB;
+    if (!strcmp(token, "=")) return NODE_OP_EQ;
+    if (!strcmp(token, "<=")) return NODE_OP_LE;
+    if (!strcmp(token, ">=")) return NODE_OP_GE;
+    if (!strcmp(token, "*")) return NODE_OP_MUL;
 
     return NODE_VAR;
 }
@@ -149,11 +151,10 @@ ASTNode* binaryTreeParser(FILE* file) {
 
     if (!lexerNextToken(file, token)) return NULL;
 
-    if (isdigit(token[0]) || (token[0] == '-' && isdigit(token[1]))) {
+    if (isdigit(token[0]) || (token[0] == '-' && isdigit(token[1])))
         return createNode(NODE_NUM, token);
-    } else {
+    else
         return createNode(NODE_VAR, token);
-    }
 }
 
 void printInOrder(ASTNode* tree, int depth) {
@@ -273,6 +274,25 @@ void linearizeExpression(ASTNode* node, Tableau* tableau, int row, double sign,
                 linearizeExpression(node->right, tableau, row, -sign, table);
             }
             break;
+        case NODE_OP_MUL:
+            ASTNode* numNode = NULL;
+            ASTNode* varNode = NULL;
+
+            if (node->left->type == NODE_NUM) {
+                numNode = node->left;
+                varNode = node->right;
+            } else if (node->left->type == NODE_VAR) {
+                numNode = node->right;
+                varNode = node->left;
+            }
+
+            if (numNode && varNode && varNode->type == NODE_VAR) {
+                double coefficient = atof(numNode->token);
+                int col = getOrCreateVariableColumn(table, varNode->token);
+                tableau->matrix[row][col] += (coefficient * sign);
+            }
+
+            break;
 
         case NODE_OP_EQ:
         case NODE_OP_LE:
@@ -327,6 +347,12 @@ bool smt(ASTNode** array, int size) {
     for (int i = 0; i < size; i++)
         convertAssertionToRow(array[i], tableau, i, &table);
 
+    for (int i = 0; i < tableau->rows; i++) {
+        for (int j = 0; j < tableau->columns; j++) {
+            printf("%lf\n", tableau->matrix[i][j]);
+        }
+    }
+
     int* solution = (int*)malloc(table.totalVariables * sizeof(int));
 
     printf("\n[SMT] Resolvendo LIA localmente com %d variáveis...\n",
@@ -334,9 +360,7 @@ bool smt(ASTNode** array, int size) {
 
     bool result = solveLIA(tableau, &solution);
 
-    if (result) {
-        printSolution(tableau, solution);
-    }
+    if (result) printSolution(tableau, solution);
 
     free(solution);
     freeTableau(tableau);
