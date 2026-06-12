@@ -13,9 +13,9 @@ double getVariableValue(Tableau* tableau, int variableColumn) {
     int zeroCount = 0, oneCount = 0, rowWithTheOne = -1, i;
 
     for (i = 0; i < tableau->rows; i++) {
-        if (tableau->matrix[i][variableColumn] == 0.0)
+        if (fabs(tableau->matrix[i][variableColumn]) < EPSILON)
             zeroCount++;
-        else if (tableau->matrix[i][variableColumn] == 1.0) {
+        else if (fabs(tableau->matrix[i][variableColumn]) - 1 < EPSILON) {
             oneCount++;
 
             rowWithTheOne = i;

@@ -5,7 +5,9 @@
 #include <string.h>
 
 #include "./types/lia.h"
+#include "./types/linearAtom.h"
 
+#define MAX_ATOMS 100
 #define MAX_LEN 32
 #define MAX_VARS 10
 

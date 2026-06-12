@@ -7,8 +7,8 @@ plot(binarySearchTree,
      type = "l",
      lwd = 2,
      col = "tomato",
-     main = "Big-O da Busca",
-     xlab = "Tamanho do Problema",
+     main = "Distribuição de Comparações na Busca (N = 32768)",
+     xlab = "Consultas (Ordenadas do Melhor para o Pior Caso)",
      ylab = "Número de Comparações")
 
 lines(avl,
