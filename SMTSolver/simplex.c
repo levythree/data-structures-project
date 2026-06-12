@@ -18,6 +18,8 @@ Tableau* createTableau(int variables, int equations) {
     for (i = 0; i < tableau->rows; i++)
         tableau->matrix[i] = (double*)calloc(tableau->columns, sizeof(double));
 
+    for (i = 0; i < equations; i++) tableau->matrix[i][variables + i] = 1.0;
+
     return tableau;
 }
 

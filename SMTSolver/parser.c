@@ -17,7 +17,8 @@ typedef enum {
     NODE_OP_EQ,
     NODE_OP_LE,
     NODE_OP_GE,
-    NODE_OP_MUL
+    NODE_OP_MUL,
+    NODE_OP_OR
 } NodeType;
 
 typedef struct ASTNode {
@@ -115,6 +116,7 @@ NodeType getNodeType(char* token) {
     if (!strcmp(token, "<=")) return NODE_OP_LE;
     if (!strcmp(token, ">=")) return NODE_OP_GE;
     if (!strcmp(token, "*")) return NODE_OP_MUL;
+    if (!strcmp(token, "or")) return NODE_OP_OR;
 
     return NODE_VAR;
 }
@@ -324,6 +326,9 @@ void convertAssertionToRow(ASTNode* tree, Tableau* tableau, int row,
         case NODE_OP_EQ:
             linearizeExpression(tree->left, tableau, row, 1.0, table);
             linearizeExpression(tree->right, tableau, row, -1.0, table);
+
+            linearizeExpression(tree->left, tableau, row + 1, -1.0, table);
+            linearizeExpression(tree->right, tableau, row + 1, 1.0, table);
             break;
 
         default:
@@ -336,27 +341,36 @@ bool smt(ASTNode** array, int size) {
     SymbolTable table;
     initSymbolTable(&table);
 
+    int equationsQuantity = 0;
     for (int i = 0; i < size; i++) {
         printInOrder(array[i], 0);
         linearizeExpression(array[i], NULL, 0, 1.0, &table);
+
+        if (array[i]->type == NODE_OP_EQ)
+            equationsQuantity += 2;
+        else
+            equationsQuantity += 1;
     }
 
-    int equationsQuantity = size;
     Tableau* tableau = createTableau(table.totalVariables, equationsQuantity);
 
-    for (int i = 0; i < size; i++)
-        convertAssertionToRow(array[i], tableau, i, &table);
-
-    for (int i = 0; i < tableau->rows; i++) {
-        for (int j = 0; j < tableau->columns; j++) {
-            printf("%lf\n", tableau->matrix[i][j]);
+    int currentRow = 0;
+    for (int i = 0; i < size; i++) {
+        if (array[i]->type == NODE_OP_EQ) {
+            convertAssertionToRow(array[i], tableau, currentRow, &table);
+            currentRow += 2;
+        } else {
+            convertAssertionToRow(array[i], tableau, currentRow, &table);
+            currentRow += 1;
         }
     }
 
-    int* solution = (int*)malloc(table.totalVariables * sizeof(int));
+    printf(
+        "\n[SMT] Resolvendo LIA localmente com %d variáveis e %d "
+        "restrições...\n",
+        table.totalVariables, equationsQuantity);
 
-    printf("\n[SMT] Resolvendo LIA localmente com %d variáveis...\n",
-           table.totalVariables);
+    int* solution = (int*)malloc(table.totalVariables * sizeof(int));
 
     bool result = solveLIA(tableau, &solution);
 

@@ -2,8 +2,11 @@
 (set-logic QF_LIA)
 (declare-const x Int)
 (declare-const y Int)
-(assert (<= (- x (* 2 y)) 20))
-(assert (>= (- x (* 2 y)) 21))
+(assert (or (= x 5) (= x 10)))
+(assert (<= (- x) 0))
+
+(true, false, true) -> Simplex
+
 (check-sat)
 ; unsat
 (exit)
