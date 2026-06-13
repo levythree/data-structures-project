@@ -1,215 +1,15 @@
 #include "./types/smt.h"
 
 #include <ctype.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "./types/lia.h"
-#include "./types/linearAtom.h"
+#include "./types/atom.h"
 #include "./types/sat.h"
-
-bool lexerNextToken(FILE* file, char* token) {
-    int character;
-
-    while (true) {
-        character = fgetc(file);
-        if (character == EOF) return false;
-
-        if (isspace(character)) continue;
-
-        if (character == ';') {
-            while ((character = fgetc(file)) != '\n' && character != EOF);
-            continue;
-        }
-
-        break;
-    }
-
-    if (character == '(' || character == ')') {
-        token[0] = character;
-        token[1] = '\0';
-        return true;
-    }
-
-    int len = 0;
-    while (character != EOF && !isspace(character) && character != '(' &&
-           character != ')') {
-        if (len < MAX_LEN - 1) token[len++] = character;
-
-        character = fgetc(file);
-    }
-    token[len] = '\0';
-
-    if (character != EOF) ungetc(character, file);
-
-    return true;
-}
-
-int lexerPeekChar(FILE* file) {
-    int character;
-
-    while (true) {
-        character = fgetc(file);
-        if (character == EOF) return EOF;
-
-        if (isspace(character)) continue;
-
-        if (character == ';') {
-            while ((character = fgetc(file)) != '\n' && character != EOF);
-            continue;
-        }
-
-        break;
-    }
-
-    if (character != EOF) ungetc(character, file);
-
-    return character;
-}
-
-ASTNode* createNode(NodeType type, const char* token) {
-    ASTNode* node = (ASTNode*)malloc(sizeof(ASTNode));
-    node->type = type;
-
-    strcpy(node->token, token);
-
-    node->left = NULL;
-    node->right = NULL;
-
-    return node;
-}
-
-NodeType getNodeType(char* token) {
-    if (!strcmp(token, "+")) return NODE_OP_ADD;
-    if (!strcmp(token, "-")) return NODE_OP_SUB;
-    if (!strcmp(token, "=")) return NODE_OP_EQ;
-    if (!strcmp(token, "<=")) return NODE_OP_LE;
-    if (!strcmp(token, ">=")) return NODE_OP_GE;
-    if (!strcmp(token, "*")) return NODE_OP_MUL;
-    if (!strcmp(token, "or")) return NODE_OP_OR;
-
-    return NODE_VAR;
-}
-
-ASTNode* binaryTreeParser(FILE* file) {
-    char token[MAX_LEN];
-
-    int nextChar = lexerPeekChar(file);
-
-    if (nextChar == '(') {
-        lexerNextToken(file, token);
-
-        char op[MAX_LEN];
-        lexerNextToken(file, op);
-
-        NodeType opType = getNodeType(op);
-        ASTNode* current_node = createNode(opType, op);
-
-        current_node->left = binaryTreeParser(file);
-
-        if (lexerPeekChar(file) != ')')
-            current_node->right = binaryTreeParser(file);
-
-        while (lexerPeekChar(file) != ')') {
-            ASTNode* new_parent = createNode(opType, op);
-            new_parent->left = current_node;
-            new_parent->right = binaryTreeParser(file);
-            current_node = new_parent;
-        }
-
-        lexerNextToken(file, token);
-        return current_node;
-    }
-
-    if (!lexerNextToken(file, token)) return NULL;
-
-    if (isdigit(token[0]) || (token[0] == '-' && isdigit(token[1])))
-        return createNode(NODE_NUM, token);
-    else
-        return createNode(NODE_VAR, token);
-}
-
-void printInOrder(ASTNode* tree, int depth) {
-    if (!tree) return;
-
-    printInOrder(tree->right, depth + 1);
-
-    for (int i = 0; i < depth; i++) {
-        printf("        ");
-    }
-
-    if (strcmp(tree->token, "-") == 0 && tree->right == NULL)
-        printf("[ - unário ]\n");
-    else
-        printf("[ %s ]\n", tree->token);
-
-    printInOrder(tree->left, depth + 1);
-}
-
-void parseSMTFile(FILE* file, ASTNode** array, int* counter) {
-    char token[32];
-
-    while (lexerNextToken(file, token)) {
-        if (strcmp(token, "(") == 0) {
-            char command[32];
-            lexerNextToken(file, command);
-
-            if (strcmp(command, "declare-const") == 0) {
-                char variable[32];
-                char type[32];
-
-                lexerNextToken(file, variable);
-                lexerNextToken(file, type);
-
-                lexerNextToken(file, token);
-                printf("[Gerenciador] Registrada variável inteira: %s\n",
-                       variable);
-
-            } else if (strcmp(command, "assert") == 0) {
-                printf("[Gerenciador] Entrando na região do assert...\n");
-
-                ASTNode* tree = binaryTreeParser(file);
-                array[(*counter)++] = tree;
-
-                printf(
-                    "[Gerenciador] Árvore do assert construída com sucesso!\n");
-
-                lexerNextToken(file, token);
-
-            } else if (strcmp(command, "check-sat") == 0) {
-                printf("[Gerenciador] Comando check-sat detectado!\n");
-
-                lexerNextToken(file, token);
-
-            } else {
-                int openedParentheses = 1;
-                while (openedParentheses > 0) {
-                    lexerNextToken(file, token);
-                    if (strcmp(token, "(") == 0) openedParentheses++;
-                    if (strcmp(token, ")") == 0) openedParentheses--;
-                }
-            }
-        }
-    }
-}
-
-void initSymbolTable(SymbolTable* table) { table->totalVariables = 0; }
-
-int getOrCreateVariableColumn(SymbolTable* table, char* name) {
-    for (int i = 0; i < table->totalVariables; i++) {
-        if (strcmp(table->vars[i].name, name) == 0) {
-            return table->vars[i].column;
-        }
-    }
-
-    strcpy(table->vars[table->totalVariables].name, name);
-    table->vars[table->totalVariables].column = table->totalVariables;
-    table->totalVariables++;
-
-    return table->totalVariables - 1;
-}
 
 void linearizeExpression(ASTNode* node, Tableau* tableau, int row, double sign,
                          SymbolTable* table) {
@@ -280,34 +80,25 @@ void linearizeExpression(ASTNode* node, Tableau* tableau, int row, double sign,
     }
 }
 
-LinearAtom extractLinearAtom(ASTNode* node, SymbolTable* table) {
+LinearAtom extractLinearAtom(ASTNode* node, SymbolTable* table, bool invert) {
     Tableau* tempTab = createTableau(table->totalVariables, 1);
 
-    if (node->type == NODE_OP_LE) {
-        linearizeExpression(node->left, tempTab, 0, 1.0, table);
-        linearizeExpression(node->right, tempTab, 0, -1.0, table);
+    double leftSign = invert ? -1.0 : 1.0;
+    double rightSign = invert ? 1.0 : -1.0;
 
-    } else if (node->type == NODE_OP_GE) {
-        linearizeExpression(node->left, tempTab, 0, -1.0, table);
-        linearizeExpression(node->right, tempTab, 0, 1.0, table);
+    linearizeExpression(node->left, tempTab, 0, leftSign, table);
+    linearizeExpression(node->right, tempTab, 0, rightSign, table);
 
-    } else if (node->type == NODE_OP_EQ) {
-        linearizeExpression(node->left, tempTab, 0, 1.0, table);
-        linearizeExpression(node->right, tempTab, 0, -1.0, table);
-    }
-
-    double* coefficients =
-        (double*)calloc(table->totalVariables, sizeof(double));
-
+    double* coefficients = (double*)calloc(table->totalVariables, sizeof(double));
     for (int i = 0; i < table->totalVariables; i++) {
         coefficients[i] = tempTab->matrix[0][i];
     }
 
-    double rhs = -tempTab->matrix[0][tempTab->columns - 1];
+    double rhs = tempTab->matrix[0][tempTab->columns - 1];
 
-    LinearAtom atom =
-        createLinearAtom(table->totalVariables, coefficients, rhs);
-    atom.type = node->type;
+    LinearAtom atom = createLinearAtom(table->totalVariables, coefficients, rhs);
+    
+    atom.type = NODE_OP_LE; 
 
     free(coefficients);
     freeTableau(tempTab);
@@ -315,35 +106,111 @@ LinearAtom extractLinearAtom(ASTNode* node, SymbolTable* table) {
     return atom;
 }
 
-void mapAstToCnfBuffer(ASTNode* node, LinearAtom* linearAtoms, int totalAtoms,
-                       int* clauseBuffer, int* literalCount) {
-    if (!node) return;
+void parseToLinearAtoms(ASTNode* node, LinearAtom* linearAtoms, int* counter, SymbolTable* table) {
+    if (node == NULL) return;
 
     if (node->type == NODE_OP_OR) {
-        mapAstToCnfBuffer(node->left, linearAtoms, totalAtoms, clauseBuffer,
-                          literalCount);
-        mapAstToCnfBuffer(node->right, linearAtoms, totalAtoms, clauseBuffer,
-                          literalCount);
+        parseToLinearAtoms(node->left, linearAtoms, counter, table);
+        parseToLinearAtoms(node->right, linearAtoms, counter, table);
+
         return;
     }
 
-    if (node->type == NODE_OP_LE || node->type == NODE_OP_GE ||
-        node->type == NODE_OP_EQ) {
+    if (node->type == NODE_OP_LE) {
+        linearAtoms[*counter] = extractLinearAtom(node, table, false);
+
+        (*counter)++;
+    }
+    
+    if (node->type == NODE_OP_GE) {
+        linearAtoms[*counter] = extractLinearAtom(node, table, true);
+
+        (*counter)++;
+    }
+}
+
+bool atomsMatch(LinearAtom a, LinearAtom b, int numVars) {
+    if (a.type != b.type) return false;
+    
+    if (fabs(a.rhs - b.rhs) > 1e-6) return false;
+    
+    for (int i = 0; i < numVars; i++) {
+        if (fabs(a.coefficients[i] - b.coefficients[i]) > 1e-6) return false;
+    }
+    
+    return true;
+}
+
+void mapAstToCnfBuffer(ASTNode* node, LinearAtom* linearAtoms, int totalAtoms,
+                       int* clauseBuffer, int* literalCount, SymbolTable* table) {
+    if (!node) return;
+
+    if (node->type == NODE_OP_OR) {
+        mapAstToCnfBuffer(node->left, linearAtoms, totalAtoms, clauseBuffer, literalCount, table);
+        mapAstToCnfBuffer(node->right, linearAtoms, totalAtoms, clauseBuffer, literalCount, table);
+        return;
+    }
+
+    if (node->type == NODE_OP_LE) {
+        LinearAtom tempAtom = extractLinearAtom(node, table, false);
+
         for (int i = 0; i < totalAtoms; i++) {
-            if (linearAtoms[i].type == node->type &&
-                !strcmp(linearAtoms[i].coefficients != NULL ? node->token : "",
-                        node->token)) {
+            if (atomsMatch(linearAtoms[i], tempAtom, table->totalVariables)) {
                 clauseBuffer[*literalCount] = i + 1;
                 (*literalCount)++;
-                return;
+
+                break;
             }
+        }
+
+        freeLinearAtom(&tempAtom);
+    }
+    
+    if (node->type == NODE_OP_GE) {
+        LinearAtom tempAtomInverted = extractLinearAtom(node, table, true);
+
+        for (int i = 0; i < totalAtoms; i++) {
+            if (atomsMatch(linearAtoms[i], tempAtomInverted, table->totalVariables)) {
+                clauseBuffer[*literalCount] = i + 1;
+                (*literalCount)++;
+
+                break;
+            }
+        }
+
+        freeLinearAtom(&tempAtomInverted);
+    }
+}
+
+void desugarEqualities(ASTNode** array, int* assertionsCount) {
+    int originalCount = *assertionsCount;
+    
+    for (int i = 0; i < originalCount; i++) {
+        if (array[i]->type == NODE_OP_EQ) {
+            array[i]->type = NODE_OP_LE;
+            strcpy(array[i]->token, "<=");
+
+            ASTNode* duplicate = cloneAST(array[i]);
+            duplicate->type = NODE_OP_GE;
+            strcpy(duplicate->token, ">=");
+
+            array[*assertionsCount] = duplicate;
+            (*assertionsCount)++;
         }
     }
 }
 
-bool checkTheory(int* interpretation, int totalVariables, SymbolTable* table,
-                 LinearAtom* linearAtoms) {
+void printSolution(SymbolTable* table, int* solution) {
+    printf("SAT!\n\n");
+
+    for (int i = 0; i < table->totalVariables; i++) {
+        printf("%s = %d\n", table->vars[i].name, solution[i]);
+    }
+}
+
+bool checkTheory(int* interpretation, int totalVariables, SymbolTable* table, LinearAtom* linearAtoms) {
     int activeConstraints = 0;
+
     for (int i = 1; i <= totalVariables; i++) {
         if (interpretation[i] != 0) {
             activeConstraints++;
@@ -352,10 +219,7 @@ bool checkTheory(int* interpretation, int totalVariables, SymbolTable* table,
 
     if (activeConstraints == 0) return true;
 
-    int totalRows = activeConstraints + 1;
-    int totalCols = table->totalVariables + 1;
-
-    Tableau* solverTab = createTableau(totalRows, totalCols);
+    Tableau* solverTab = createTableau(table->totalVariables, activeConstraints);
 
     int currentRow = 0;
 
@@ -368,41 +232,28 @@ bool checkTheory(int* interpretation, int totalVariables, SymbolTable* table,
             for (int col = 0; col < table->totalVariables; col++) {
                 solverTab->matrix[currentRow][col] = atom.coefficients[col];
             }
-            solverTab->matrix[currentRow][solverTab->columns - 1] = atom.rhs;
 
+            solverTab->matrix[currentRow][solverTab->columns - 1] = atom.rhs;
         } else if (interpretation[i] == -1) {
-            if (atom.type == NODE_OP_LE) {
-                for (int col = 0; col < table->totalVariables; col++) {
-                    solverTab->matrix[currentRow][col] =
-                        -atom.coefficients[col];
-                }
-                solverTab->matrix[currentRow][solverTab->columns - 1] =
-                    -atom.rhs - 1;
-            } else if (atom.type == NODE_OP_GE) {
-                for (int col = 0; col < table->totalVariables; col++) {
-                    solverTab->matrix[currentRow][col] = atom.coefficients[col];
-                }
-                solverTab->matrix[currentRow][solverTab->columns - 1] =
-                    atom.rhs - 1;
-            } else if (atom.type == NODE_OP_EQ) {
-                for (int col = 0; col < table->totalVariables; col++) {
-                    solverTab->matrix[currentRow][col] =
-                        -atom.coefficients[col];
-                }
-                solverTab->matrix[currentRow][solverTab->columns - 1] =
-                    -atom.rhs;
+            for (int col = 0; col < table->totalVariables; col++) {
+                solverTab->matrix[currentRow][col] = -atom.coefficients[col];
             }
+
+            solverTab->matrix[currentRow][solverTab->columns - 1] = -atom.rhs - 1.0;
         }
+
         currentRow++;
     }
 
     for (int col = 0; col < solverTab->columns; col++) {
-        solverTab->matrix[totalRows - 1][col] = 0.0;
+        solverTab->matrix[solverTab->rows - 1][col] = 0.0;
     }
 
-    int* dummySolution = (int*)malloc(table->totalVariables * sizeof(int));
+    int* dummySolution = (int*) malloc(table->totalVariables * sizeof(int));
 
     bool isConsistent = solveLIA(solverTab, &dummySolution);
+
+    if (isConsistent) printSolution(table, dummySolution);
 
     free(dummySolution);
     freeTableau(solverTab);
@@ -410,51 +261,48 @@ bool checkTheory(int* interpretation, int totalVariables, SymbolTable* table,
     return isConsistent;
 }
 
-bool satSMT(Formula* formula, int* interpretation, int currentVariable,
-            SATNode** satNode, SymbolTable* table, LinearAtom* linearAtoms) {
-    if (currentVariable > formula->numberOfVariables)
-        return checkTheory(interpretation, formula->numberOfVariables, table,
-                           linearAtoms);
+bool satSMT(Formula* formula, int* interpretation, int currentVariable, 
+            SymbolTable* table, LinearAtom* linearAtoms) {
+    
+    int status = evaluateFormula(formula, interpretation);
 
-    interpretation[currentVariable] = 1;
-    *satNode = createSATNode(currentVariable, 1);
-
-    if (checkTheory(interpretation, formula->numberOfVariables, table,
-                    linearAtoms)) {
-        if (satSMT(formula, interpretation, currentVariable + 1,
-                   &((*satNode)->left), table, linearAtoms)) {
+    if (status == 1) {
+        if (checkTheory(interpretation, formula->numberOfVariables, table, linearAtoms)) {
             return true;
+        } else {
+            return false;
         }
     }
 
-    interpretation[currentVariable] = -1;
-    *satNode = createSATNode(currentVariable, -1);
+    if (status == -1) return false;
+    if (currentVariable > formula->numberOfVariables) return false;
 
-    if (checkTheory(interpretation, formula->numberOfVariables, table,
-                    linearAtoms)) {
-        if (satSMT(formula, interpretation, currentVariable + 1,
-                   &((*satNode)->right), table, linearAtoms)) {
-            return true;
-        }
+    interpretation[currentVariable] = 1;
+    if (satSMT(formula, interpretation, currentVariable + 1, table, linearAtoms)) {
+        return true;
+    }
+
+    interpretation[currentVariable] = -1;
+    if (satSMT(formula, interpretation, currentVariable + 1, table, linearAtoms)) {
+        return true;
     }
 
     interpretation[currentVariable] = 0;
     return false;
 }
 
-bool smt(ASTNode** array, int assertionsCount, LinearAtom* linearAtoms,
-         int linearAtomsCount, SymbolTable* table) {
+bool smt(ASTNode** array, int assertionsCount, LinearAtom* linearAtoms, int linearAtomsCount, SymbolTable* table) {
     if (!assertionsCount) return true;
 
     Formula* formula = createFormula(linearAtomsCount, assertionsCount);
 
-    int* temporaryBuffer = (int*)malloc(linearAtomsCount * sizeof(int));
+    int* temporaryBuffer = (int*) malloc(linearAtomsCount * sizeof(int));
     int atomTracker = 0;
+
     for (int i = 0; i < assertionsCount; i++) {
         int literalCount = 0;
 
-        mapAstToCnfBuffer(array[i], linearAtoms, linearAtomsCount,
-                          temporaryBuffer, &literalCount);
+        mapAstToCnfBuffer(array[i], linearAtoms, linearAtomsCount, temporaryBuffer, &literalCount, table);
 
         if (literalCount == 0) {
             temporaryBuffer[0] = ++atomTracker;
@@ -468,69 +316,10 @@ bool smt(ASTNode** array, int assertionsCount, LinearAtom* linearAtoms,
 
     free(temporaryBuffer);
 
-    printf("[SMT] Fórmula booleana gerada com sucesso para o SAT Solver!\n");
-    printf("[SMT] Cláusulas lógicas: %d, Variáveis booleanas (Átomos): %d\n",
-           formula->numberOfClauses, formula->numberOfVariables);
+    int* interpretation = (int*)calloc(formula->numberOfVariables + 1, sizeof(int));
 
-    int* interpretation =
-        (int*)calloc(formula->numberOfVariables + 1, sizeof(int));
-    SATNode* satTree = NULL;
-
-    bool result =
-        satSMT(formula, interpretation, 1, &satTree, table, linearAtoms);
+    bool result = satSMT(formula, interpretation, 1, table, linearAtoms);
     free(interpretation);
 
     return result;
-}
-
-void parseToLinearAtoms(ASTNode* node, LinearAtom* linearAtoms, int* counter,
-                        SymbolTable* table) {
-    if (!node) return;
-
-    if (node->type == NODE_OP_OR) {
-        parseToLinearAtoms(node->left, linearAtoms, counter, table);
-        parseToLinearAtoms(node->right, linearAtoms, counter, table);
-        return;
-    }
-
-    if (node->type == NODE_OP_LE || node->type == NODE_OP_GE ||
-        node->type == NODE_OP_EQ) {
-        linearAtoms[*counter] = extractLinearAtom(node, table);
-        (*counter)++;
-        return;
-    }
-}
-
-int main(int argc, char* argv[]) {
-    FILE* file = fopen(argv[1], "r");
-
-    ASTNode** array = malloc(10 * sizeof(ASTNode*));
-    LinearAtom* linearAtoms = malloc(100 * sizeof(LinearAtom));
-    SymbolTable table;
-    initSymbolTable(&table);
-
-    int assertionsCount = 0;
-    int linearAtomsCount = 0;
-
-    if (file == NULL) {
-        perror("Erro ao abrir o arquivo");
-        free(array);
-        return 1;
-    }
-
-    parseSMTFile(file, array, &assertionsCount);
-
-    for (int i = 0; i < assertionsCount; i++) {
-        linearizeExpression(array[i], NULL, 0, 1.0, &table);
-        parseToLinearAtoms(array[i], linearAtoms, &linearAtomsCount, &table);
-    }
-
-    if (smt(array, assertionsCount, linearAtoms, linearAtomsCount, &table))
-        printf("SAT\n");
-    else
-        printf("UNSAT\n");
-
-    fclose(file);
-
-    return 0;
 }

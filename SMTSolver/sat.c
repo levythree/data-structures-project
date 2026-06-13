@@ -25,13 +25,46 @@ Formula* createFormula(int numberOfVariables, int numberOfClauses) {
     return formula;
 }
 
-SATNode* createSATNode(int variableId, int valueAssigned) {
-    SATNode* satNode = (SATNode*)malloc(sizeof(SATNode));
+int evaluateFormula(Formula* formula, int* interpretation) {
+    bool allClausesTrue = true;
 
-    satNode->variableId = variableId;
-    satNode->valueAssigned = valueAssigned;
-    satNode->left = NULL;
-    satNode->right = NULL;
+    for (int i = 0; i < formula->numberOfClauses; i++) {
+        bool clauseIsTrue = false, clauseHasUnassigned = false;
 
-    return satNode;
+        for (int j = 0; j < formula->clauses[i].numberOfLiterals; j++) {
+            int literal = formula->clauses[i].literals[j];
+            int variableId = abs(literal);
+            int variableValue = interpretation[variableId];
+
+            int literalTruthValue = 0;
+            
+            if (variableValue != 0) literalTruthValue = (literal > 0) ? variableValue : -variableValue;
+
+            if (literalTruthValue == 1) {
+                clauseIsTrue = true;
+
+                break;
+            } else if (literalTruthValue == 0) clauseHasUnassigned = true;
+        }
+
+        if (!clauseIsTrue) {
+            if (!clauseHasUnassigned) return -1;
+            else allClausesTrue = false;
+        }
+    }
+
+    if (allClausesTrue) return 1;
+
+    return 0;
+}
+
+void freeFormula(Formula* formula) {
+    if (formula == NULL) return;
+
+    for (int i = 0; i < formula->numberOfClauses; i++) {
+        if (formula->clauses[i].literals) free(formula->clauses[i].literals);
+    }
+
+    free(formula->clauses);
+    free(formula);
 }

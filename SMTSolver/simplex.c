@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define EPSILON 1e-6
+
 Tableau* createTableau(int variables, int equations) {
     Tableau* tableau = (Tableau*)malloc(sizeof(Tableau));
 
@@ -52,12 +54,11 @@ void pivot(Tableau* tableau, int pivotRow, int pivotColumn) {
 
 bool simplex(Tableau* tableau) {
     while (true) {
-        int i, j;
         int pivotColumn = -1;
         int pivotRow = -1;
-        double mostNegative = 0.0;
+        double mostNegative = -EPSILON;
 
-        for (i = 0; i < tableau->rows - 1; i++) {
+        for (int i = 0; i < tableau->rows - 1; i++) {
             if (tableau->matrix[i][tableau->columns - 1] < mostNegative) {
                 mostNegative = tableau->matrix[i][tableau->columns - 1];
 
@@ -67,8 +68,8 @@ bool simplex(Tableau* tableau) {
 
         if (pivotRow == -1) return true;
 
-        for (j = 0; j < tableau->columns - 1; j++) {
-            if (tableau->matrix[pivotRow][j] < 0.0) {
+        for (int j = 0; j < tableau->columns - 1; j++) {
+            if (tableau->matrix[pivotRow][j] < -EPSILON) {
                 pivotColumn = j;
 
                 break;

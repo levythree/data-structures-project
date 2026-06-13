@@ -1,6 +1,7 @@
-#ifndef linearAtomH
-#define linearAtomH
-#include "./nodeType.h"
+#ifndef atomH
+#define atomH
+
+#include "ast.h"
 
 typedef struct {
     int numberOfVariables;

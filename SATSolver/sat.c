@@ -81,12 +81,10 @@ Formula* readCnf(const char* fileName) {
 int evaluateFormula(Formula* formula, int* interpretation) {
     bool allClausesTrue = true;
     
-    int i, j;
-
-    for (i = 0; i < formula->numberOfClauses; i++) {
+    for (int i = 0; i < formula->numberOfClauses; i++) {
         bool clauseIsTrue = false, clauseHasUnassigned = false;
 
-        for (j = 0; j < formula->clauses[i].numberOfLiterals; j++) {
+        for (int j = 0; j < formula->clauses[i].numberOfLiterals; j++) {
             int literal = formula->clauses[i].literals[j];
             int variableId = abs(literal);
             int variableValue = interpretation[variableId];
@@ -141,8 +139,8 @@ bool sat(Formula* formula, int* interpretation, int currentVariable, SATNode** s
 void printSATTree(SATNode* satNode) {
     if (satNode == NULL) return;
 
-    if (satNode->valueAssigned == 1) printf("x%d: True\n", satNode->variableId);
-    else if (satNode->valueAssigned == -1) printf("x%d: False\n", satNode->variableId);
+    if (satNode->valueAssigned == 1) printf("x%d = True\n", satNode->variableId);
+    else if (satNode->valueAssigned == -1) printf("x%d = False\n", satNode->variableId);
 
     printSATTree(satNode->left);
     printSATTree(satNode->right);

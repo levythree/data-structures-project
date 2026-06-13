@@ -1,6 +1,7 @@
-#include <stdbool.h>
 #ifndef liaH
 #define liaH
+
+#include <stdbool.h>
 
 #include "simplex.h"
 
@@ -11,7 +12,5 @@ Tableau* cloneTableau(Tableau* oldTableau);
 Tableau* cloneAndExpand(Tableau* oldTableau);
 
 bool solveLIA(Tableau* tableau, int** solutions);
-
-void printSolution(Tableau* tableau, int* solution);
 
 #endif

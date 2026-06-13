@@ -15,7 +15,7 @@ double getVariableValue(Tableau* tableau, int variableColumn) {
     for (i = 0; i < tableau->rows; i++) {
         if (fabs(tableau->matrix[i][variableColumn]) < EPSILON)
             zeroCount++;
-        else if (fabs(tableau->matrix[i][variableColumn]) - 1 < EPSILON) {
+        else if (fabs(fabs(tableau->matrix[i][variableColumn]) - 1.0) < EPSILON) {
             oneCount++;
 
             rowWithTheOne = i;
@@ -146,13 +146,4 @@ bool solveLIA(Tableau* tableau, int** solution) {
     freeTableau(rightTableau);
 
     return false;
-}
-
-void printSolution(Tableau* tableau, int* solution) {
-    int i;
-
-    printf("Variable values:\n");
-
-    for (i = 0; i < tableau->variables; i++)
-        printf("x%d = %d\n", i + 1, solution[i]);
 }

@@ -19,7 +19,7 @@ int main(int numberOfArguments, char** arguments) {
     SATNode* satNode = NULL;
 
     if (sat(formula, interpretation, 1, &satNode)) {
-        printf("SAT!\n");
+        printf("SAT!\n\n");
 
         printSATTree(satNode);
     } else printf("UNSAT!\n");

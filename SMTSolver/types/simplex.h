@@ -1,6 +1,7 @@
-#include <stdbool.h>
 #ifndef simplexH
 #define simplexH
+
+#include <stdbool.h>
 
 typedef struct {
     int variables;

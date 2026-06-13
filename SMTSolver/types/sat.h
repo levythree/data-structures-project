@@ -1,5 +1,5 @@
-#ifndef cnfH
-#define cnfH
+#ifndef satH
+#define satH
 
 typedef struct {
     int* literals;
@@ -12,17 +12,12 @@ typedef struct {
     int numberOfClauses;
 } Formula;
 
-typedef struct satNode {
-    int variableId;
-    int valueAssigned;
-    struct satNode* left;
-    struct satNode* right;
-} SATNode;
-
 void initClause(Clause* clause, int* temporaryBuffer, int numberOfLiterals);
 
 Formula* createFormula(int numberOfVariables, int numberOfClauses);
 
-SATNode* createSATNode(int variableId, int valueAssigned);
+int evaluateFormula(Formula* formula, int* interpretation);
+
+void freeFormula(Formula* formula);
 
 #endif
