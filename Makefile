@@ -16,7 +16,6 @@ $(PROJECTS):
 	@echo "-------------------------------------------------"
 	@echo " Compilando o projeto: $@..."
 	@echo "-------------------------------------------------"
-	# Procura dinamicamente todos os arquivos .c dentro da pasta correspondente
 	$(eval SRCS := $(wildcard $@/*.c))
 	@if [ -z "$(SRCS)" ]; then \
 		echo "Aviso: Nenhum arquivo .c encontrado na pasta $@/. Pulando..."; \

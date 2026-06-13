@@ -1,3 +1,5 @@
+#include "./types/smt.h"
+
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -6,39 +8,7 @@
 
 #include "./types/lia.h"
 #include "./types/linearAtom.h"
-
-#define MAX_ATOMS 100
-#define MAX_LEN 32
-#define MAX_VARS 10
-
-typedef enum {
-    NODE_VAR,
-    NODE_NUM,
-    NODE_OP_ADD,
-    NODE_OP_SUB,
-    NODE_OP_EQ,
-    NODE_OP_LE,
-    NODE_OP_GE,
-    NODE_OP_MUL,
-    NODE_OP_OR
-} NodeType;
-
-typedef struct ASTNode {
-    NodeType type;
-    char token[MAX_LEN];
-    struct ASTNode* left;
-    struct ASTNode* right;
-} ASTNode;
-
-typedef struct {
-    char name[MAX_LEN];
-    int column;
-} Variable;
-
-typedef struct {
-    Variable vars[MAX_VARS];
-    int totalVariables;
-} SymbolTable;
+#include "./types/sat.h"
 
 bool lexerNextToken(FILE* file, char* token) {
     int character;
@@ -310,85 +280,140 @@ void linearizeExpression(ASTNode* node, Tableau* tableau, int row, double sign,
     }
 }
 
-void convertAssertionToRow(ASTNode* tree, Tableau* tableau, int row,
-                           SymbolTable* table) {
-    if (!tree) return;
+LinearAtom extractLinearAtom(ASTNode* node, SymbolTable* table) {
+    Tableau* tempTab = createTableau(table->totalVariables, 1);
 
-    switch (tree->type) {
-        case NODE_OP_LE:
-            linearizeExpression(tree->left, tableau, row, 1.0, table);
-            linearizeExpression(tree->right, tableau, row, -1.0, table);
-            break;
+    if (node->type == NODE_OP_LE) {
+        linearizeExpression(node->left, tempTab, 0, 1.0, table);
+        linearizeExpression(node->right, tempTab, 0, -1.0, table);
 
-        case NODE_OP_GE:
-            linearizeExpression(tree->left, tableau, row, -1.0, table);
-            linearizeExpression(tree->right, tableau, row, 1.0, table);
-            break;
+    } else if (node->type == NODE_OP_GE) {
+        linearizeExpression(node->left, tempTab, 0, -1.0, table);
+        linearizeExpression(node->right, tempTab, 0, 1.0, table);
 
-        case NODE_OP_EQ:
-            linearizeExpression(tree->left, tableau, row, 1.0, table);
-            linearizeExpression(tree->right, tableau, row, -1.0, table);
+    } else if (node->type == NODE_OP_EQ) {
+        linearizeExpression(node->left, tempTab, 0, 1.0, table);
+        linearizeExpression(node->right, tempTab, 0, -1.0, table);
+    }
 
-            linearizeExpression(tree->left, tableau, row + 1, -1.0, table);
-            linearizeExpression(tree->right, tableau, row + 1, 1.0, table);
-            break;
+    double* coefficients =
+        (double*)calloc(table->totalVariables, sizeof(double));
 
-        default:
-            break;
+    for (int i = 0; i < table->totalVariables; i++) {
+        coefficients[i] = tempTab->matrix[0][i];
+    }
+
+    double rhs = -tempTab->matrix[0][tempTab->columns - 1];
+
+    LinearAtom atom =
+        createLinearAtom(table->totalVariables, coefficients, rhs);
+    atom.type = node->type;
+
+    free(coefficients);
+    freeTableau(tempTab);
+
+    return atom;
+}
+
+void mapAstToCnfBuffer(ASTNode* node, LinearAtom* linearAtoms, int totalAtoms,
+                       int* clauseBuffer, int* literalCount) {
+    if (!node) return;
+
+    if (node->type == NODE_OP_OR) {
+        mapAstToCnfBuffer(node->left, linearAtoms, totalAtoms, clauseBuffer,
+                          literalCount);
+        mapAstToCnfBuffer(node->right, linearAtoms, totalAtoms, clauseBuffer,
+                          literalCount);
+        return;
+    }
+
+    if (node->type == NODE_OP_LE || node->type == NODE_OP_GE ||
+        node->type == NODE_OP_EQ) {
+        for (int i = 0; i < totalAtoms; i++) {
+            if (linearAtoms[i].type == node->type &&
+                !strcmp(linearAtoms[i].coefficients != NULL ? node->token : "",
+                        node->token)) {
+                clauseBuffer[*literalCount] = i + 1;
+                (*literalCount)++;
+                return;
+            }
+        }
     }
 }
 
-bool smt(ASTNode** array, int size) {
-    if (size == 0) return 1;
-    SymbolTable table;
-    initSymbolTable(&table);
+bool satSMT(Formula* formula, int* interpretation, int currentVariable,
+            SATNode** satNode, SymbolTable* table, LinearAtom* linearAtoms) {}
 
-    int equationsQuantity = 0;
-    for (int i = 0; i < size; i++) {
-        printInOrder(array[i], 0);
-        linearizeExpression(array[i], NULL, 0, 1.0, &table);
+bool smt(ASTNode** array, int assertionsCount, LinearAtom* linearAtoms,
+         int linearAtomsCount, SymbolTable* table) {
+    if (!assertionsCount) return true;
 
-        if (array[i]->type == NODE_OP_EQ)
-            equationsQuantity += 2;
-        else
-            equationsQuantity += 1;
-    }
+    Formula* formula = createFormula(linearAtomsCount, assertionsCount);
 
-    Tableau* tableau = createTableau(table.totalVariables, equationsQuantity);
+    int* temporaryBuffer = (int*)malloc(linearAtomsCount * sizeof(int));
+    int atomTracker = 0;
+    for (int i = 0; i < assertionsCount; i++) {
+        int literalCount = 0;
 
-    int currentRow = 0;
-    for (int i = 0; i < size; i++) {
-        if (array[i]->type == NODE_OP_EQ) {
-            convertAssertionToRow(array[i], tableau, currentRow, &table);
-            currentRow += 2;
+        mapAstToCnfBuffer(array[i], linearAtoms, linearAtomsCount,
+                          temporaryBuffer, &literalCount);
+
+        if (literalCount == 0) {
+            temporaryBuffer[0] = ++atomTracker;
+            literalCount = 1;
         } else {
-            convertAssertionToRow(array[i], tableau, currentRow, &table);
-            currentRow += 1;
+            atomTracker += literalCount;
         }
+
+        initClause(&formula->clauses[i], temporaryBuffer, literalCount);
     }
 
-    printf(
-        "\n[SMT] Resolvendo LIA localmente com %d variáveis e %d "
-        "restrições...\n",
-        table.totalVariables, equationsQuantity);
+    free(temporaryBuffer);
 
-    int* solution = (int*)malloc(table.totalVariables * sizeof(int));
+    printf("[SMT] Fórmula booleana gerada com sucesso para o SAT Solver!\n");
+    printf("[SMT] Cláusulas lógicas: %d, Variáveis booleanas (Átomos): %d\n",
+           formula->numberOfClauses, formula->numberOfVariables);
 
-    bool result = solveLIA(tableau, &solution);
+    int* interpretation =
+        (int*)calloc(formula->numberOfVariables + 1, sizeof(int));
+    SATNode* satTree = NULL;
 
-    if (result) printSolution(tableau, solution);
+    bool result =
+        satSMT(formula, interpretation, 1, &satTree, table, linearAtoms);
+    free(interpretation);
 
-    free(solution);
-    freeTableau(tableau);
+    // return result;
+    return true;
+}
 
-    return result;
+void parseToLinearAtoms(ASTNode* node, LinearAtom* linearAtoms, int* counter,
+                        SymbolTable* table) {
+    if (!node) return;
+
+    if (node->type == NODE_OP_OR) {
+        parseToLinearAtoms(node->left, linearAtoms, counter, table);
+        parseToLinearAtoms(node->right, linearAtoms, counter, table);
+        return;
+    }
+
+    if (node->type == NODE_OP_LE || node->type == NODE_OP_GE ||
+        node->type == NODE_OP_EQ) {
+        linearAtoms[*counter] = extractLinearAtom(node, table);
+        (*counter)++;
+        return;
+    }
 }
 
 int main(int argc, char* argv[]) {
     FILE* file = fopen(argv[1], "r");
 
     ASTNode** array = malloc(10 * sizeof(ASTNode*));
-    int counter = 0;
+    LinearAtom* linearAtoms = malloc(100 * sizeof(LinearAtom));
+    SymbolTable table;
+    initSymbolTable(&table);
+
+    int assertionsCount = 0;
+    int linearAtomsCount = 0;
 
     if (file == NULL) {
         perror("Erro ao abrir o arquivo");
@@ -396,9 +421,14 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    parseSMTFile(file, array, &counter);
+    parseSMTFile(file, array, &assertionsCount);
 
-    if (smt(array, counter))
+    for (int i = 0; i < assertionsCount; i++) {
+        linearizeExpression(array[i], NULL, 0, 1.0, &table);
+        parseToLinearAtoms(array[i], linearAtoms, &linearAtomsCount, &table);
+    }
+
+    if (smt(array, assertionsCount, linearAtoms, linearAtomsCount, &table))
         printf("SAT\n");
     else
         printf("UNSAT\n");

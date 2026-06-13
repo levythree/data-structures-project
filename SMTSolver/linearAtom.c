@@ -1,18 +1,21 @@
-#include <stdlib.h>
-
 #include "types/linearAtom.h"
 
-LinearAtom createLinearAtom(int numberOfVariables, double* parsedCoefficients, double parsedRHS) {
+#include <stdlib.h>
+
+LinearAtom createLinearAtom(int numberOfVariables, double* parsedCoefficients,
+                            double parsedRHS) {
     LinearAtom linearAtom;
 
     linearAtom.numberOfVariables = numberOfVariables;
     linearAtom.rhs = parsedRHS;
 
-    linearAtom.coefficients = (double*) calloc(numberOfVariables, sizeof(double));
+    linearAtom.coefficients =
+        (double*)calloc(numberOfVariables, sizeof(double));
 
     int i;
 
-    for (i = 0; i < numberOfVariables; i++) linearAtom.coefficients[i] = parsedCoefficients[i];
+    for (i = 0; i < numberOfVariables; i++)
+        linearAtom.coefficients[i] = parsedCoefficients[i];
 
     return linearAtom;
 }
