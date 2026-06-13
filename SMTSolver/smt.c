@@ -341,8 +341,106 @@ void mapAstToCnfBuffer(ASTNode* node, LinearAtom* linearAtoms, int totalAtoms,
     }
 }
 
+bool checkTheory(int* interpretation, int totalVariables, SymbolTable* table,
+                 LinearAtom* linearAtoms) {
+    int activeConstraints = 0;
+    for (int i = 1; i <= totalVariables; i++) {
+        if (interpretation[i] != 0) {
+            activeConstraints++;
+        }
+    }
+
+    if (activeConstraints == 0) return true;
+
+    int totalRows = activeConstraints + 1;
+    int totalCols = table->totalVariables + 1;
+
+    Tableau* solverTab = createTableau(totalRows, totalCols);
+
+    int currentRow = 0;
+
+    for (int i = 1; i <= totalVariables; i++) {
+        if (interpretation[i] == 0) continue;
+
+        LinearAtom atom = linearAtoms[i - 1];
+
+        if (interpretation[i] == 1) {
+            for (int col = 0; col < table->totalVariables; col++) {
+                solverTab->matrix[currentRow][col] = atom.coefficients[col];
+            }
+            solverTab->matrix[currentRow][solverTab->columns - 1] = atom.rhs;
+
+        } else if (interpretation[i] == -1) {
+            if (atom.type == NODE_OP_LE) {
+                for (int col = 0; col < table->totalVariables; col++) {
+                    solverTab->matrix[currentRow][col] =
+                        -atom.coefficients[col];
+                }
+                solverTab->matrix[currentRow][solverTab->columns - 1] =
+                    -atom.rhs - 1;
+            } else if (atom.type == NODE_OP_GE) {
+                for (int col = 0; col < table->totalVariables; col++) {
+                    solverTab->matrix[currentRow][col] = atom.coefficients[col];
+                }
+                solverTab->matrix[currentRow][solverTab->columns - 1] =
+                    atom.rhs - 1;
+            } else if (atom.type == NODE_OP_EQ) {
+                for (int col = 0; col < table->totalVariables; col++) {
+                    solverTab->matrix[currentRow][col] =
+                        -atom.coefficients[col];
+                }
+                solverTab->matrix[currentRow][solverTab->columns - 1] =
+                    -atom.rhs;
+            }
+        }
+        currentRow++;
+    }
+
+    for (int col = 0; col < solverTab->columns; col++) {
+        solverTab->matrix[totalRows - 1][col] = 0.0;
+    }
+
+    int* dummySolution = (int*)malloc(table->totalVariables * sizeof(int));
+
+    bool isConsistent = solveLIA(solverTab, &dummySolution);
+
+    free(dummySolution);
+    freeTableau(solverTab);
+
+    return isConsistent;
+}
+
 bool satSMT(Formula* formula, int* interpretation, int currentVariable,
-            SATNode** satNode, SymbolTable* table, LinearAtom* linearAtoms) {}
+            SATNode** satNode, SymbolTable* table, LinearAtom* linearAtoms) {
+    if (currentVariable > formula->numberOfVariables)
+        return checkTheory(interpretation, formula->numberOfVariables, table,
+                           linearAtoms);
+
+    interpretation[currentVariable] = 1;
+    *satNode = createSATNode(currentVariable, 1);
+
+    if (checkTheory(interpretation, formula->numberOfVariables, table,
+                    linearAtoms)) {
+        if (satSMT(formula, interpretation, currentVariable + 1,
+                   &((*satNode)->left), table, linearAtoms)) {
+            return true;
+        }
+    }
+
+    interpretation[currentVariable] = -1;
+    *satNode = createSATNode(currentVariable, -1);
+
+    if (checkTheory(interpretation, formula->numberOfVariables, table,
+                    linearAtoms)) {
+        if (satSMT(formula, interpretation, currentVariable + 1,
+                   &((*satNode)->right), table, linearAtoms)) {
+            return true;
+        }
+    }
+
+    interpretation[currentVariable] = 0;
+    return false;
+}
 
 bool smt(ASTNode** array, int assertionsCount, LinearAtom* linearAtoms,
          int linearAtomsCount, SymbolTable* table) {
@@ -382,8 +480,7 @@ bool smt(ASTNode** array, int assertionsCount, LinearAtom* linearAtoms,
         satSMT(formula, interpretation, 1, &satTree, table, linearAtoms);
     free(interpretation);
 
-    // return result;
-    return true;
+    return result;
 }
 
 void parseToLinearAtoms(ASTNode* node, LinearAtom* linearAtoms, int* counter,
