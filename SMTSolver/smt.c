@@ -297,22 +297,21 @@ bool smt(ASTNode** array, int assertionsCount, LinearAtom* linearAtoms, int line
     Formula* formula = createFormula(linearAtomsCount, assertionsCount);
 
     int* temporaryBuffer = (int*) malloc(linearAtomsCount * sizeof(int));
-    int atomTracker = 0;
+    int numberOfClauses = 0;
 
     for (int i = 0; i < assertionsCount; i++) {
         int literalCount = 0;
 
         mapAstToCnfBuffer(array[i], linearAtoms, linearAtomsCount, temporaryBuffer, &literalCount, table);
 
-        if (literalCount == 0) {
-            temporaryBuffer[0] = ++atomTracker;
-            literalCount = 1;
-        } else {
-            atomTracker += literalCount;
-        }
+        if (literalCount == 0) continue;
 
         initClause(&formula->clauses[i], temporaryBuffer, literalCount);
+
+        numberOfClauses++;
     }
+
+    formula->numberOfClauses = numberOfClauses;
 
     free(temporaryBuffer);
 

@@ -45,8 +45,8 @@ AVL* fillAVL() {
 
 void extensiveSearch(BinarySearchTree* binarySearchTree, AVL* avl) {
     FILE* file = fopen("Dados/data.csv", "w");
-
-    fprintf(file, "Number Searched;Binary Search Tree;AVL\n");
+ 
+    fprintf(file, "nth Best Case;Binary Search Tree;AVL\n");
 
     int* sortedBinarySearchTree = (int*) malloc((MAX + 1) * sizeof(int));
     int* sortedAVL = (int*) malloc((MAX + 1) * sizeof(int));
@@ -61,7 +61,7 @@ void extensiveSearch(BinarySearchTree* binarySearchTree, AVL* avl) {
     quickSort(sortedBinarySearchTree, MAX + 1);
     quickSort(sortedAVL, MAX + 1);
 
-    for (i = 0; i <= MAX; i++) fprintf(file, "%d;%d;%d\n", i, sortedBinarySearchTree[i], sortedAVL[i]);
+    for (i = 0; i <= MAX; i++) fprintf(file, "%d;%d;%d\n", i + 1, sortedBinarySearchTree[i], sortedAVL[i]);
 }
 
 int main() {
