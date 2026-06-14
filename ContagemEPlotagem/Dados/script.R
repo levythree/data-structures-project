@@ -1,4 +1,4 @@
-data <- read.csv2("C:/Users/jadis/Documents/UFAL/data-structures-project/ContagemEPlotagem/Dados/data.csv")
+data <- read.csv2("./data.csv")
 
 binarySearchTree <- data$Binary.Search.Tree
 avl <- data$AVL
