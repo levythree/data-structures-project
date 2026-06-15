@@ -20,7 +20,7 @@ $(PROJECTS):
 	@if [ -z "$(SRCS)" ]; then \
 		echo "Aviso: Nenhum arquivo .c encontrado na pasta $@/. Pulando..."; \
 	else \
-		gcc $(CFLAGS) $(SRCS) -o $(DIST_DIR)/$@ $(LIBS); \
+		gcc -w $(CFLAGS) $(SRCS) -o $(DIST_DIR)/$@ $(LIBS); \
 		echo "Sucesso! $(DIST_DIR)/$@ gerado."; \
 	fi
 
