@@ -1,10 +1,11 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
+#include <time.h>
 
-#include "binarySearchTree.h"
 #include "avl.h"
+#include "binarySearchTree.h"
 #include "sort.h"
 
 #define MAX 32767
@@ -14,7 +15,7 @@ BinarySearchTree* fillBinarySearchTree() {
 
     int poolSize = MAX + 1, i;
 
-    int* pool = (int*) malloc(poolSize * sizeof(int));
+    int* pool = (int*)malloc(poolSize * sizeof(int));
 
     for (i = 0; i <= poolSize; i++) {
         pool[i] = i;
@@ -44,12 +45,12 @@ AVL* fillAVL() {
 }
 
 void extensiveSearch(BinarySearchTree* binarySearchTree, AVL* avl) {
-    FILE* file = fopen("Dados/data.csv", "w");
- 
+    FILE* file = fopen("./files/data/data.csv", "w");
+
     fprintf(file, "nth Best Case;Binary Search Tree;AVL\n");
 
-    int* sortedBinarySearchTree = (int*) malloc((MAX + 1) * sizeof(int));
-    int* sortedAVL = (int*) malloc((MAX + 1) * sizeof(int));
+    int* sortedBinarySearchTree = (int*)malloc((MAX + 1) * sizeof(int));
+    int* sortedAVL = (int*)malloc((MAX + 1) * sizeof(int));
 
     int i;
 
@@ -61,14 +62,16 @@ void extensiveSearch(BinarySearchTree* binarySearchTree, AVL* avl) {
     quickSort(sortedBinarySearchTree, MAX + 1);
     quickSort(sortedAVL, MAX + 1);
 
-    for (i = 0; i <= MAX; i++) fprintf(file, "%d;%d;%d\n", i + 1, sortedBinarySearchTree[i], sortedAVL[i]);
+    for (i = 0; i <= MAX; i++)
+        fprintf(file, "%d;%d;%d\n", i + 1, sortedBinarySearchTree[i],
+                sortedAVL[i]);
 }
 
 int main() {
     srand(time(NULL));
 
     int i;
-    
+
     for (i = 0; i < 100; i++) {
         rand();
     }

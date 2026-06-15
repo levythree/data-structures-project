@@ -1,4 +1,4 @@
-data <- read.csv2("./data.csv")
+data <- read.csv2("data.csv")
 
 binarySearchTree <- data$Binary.Search.Tree
 avl <- data$AVL

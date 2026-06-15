@@ -1,4 +1,4 @@
-PROJECTS = Huffman SATSolver SMTSolver
+PROJECTS = ContagemEPlotagem Huffman SATSolver SMTSolver
 
 DIST_DIR = $(CURDIR)/dist
 
