@@ -4,9 +4,9 @@ Projeto realizado para obtenção de nota na AB2 na disciplina de **estruturas d
 O projeto traz inúmeros aprendizados na área de pesquisa operacional, principalmente pelo uso de algoritmos como o simplex.
 Este repositório contém os seguintes projetos:
 
+- Plotagem de Árvore desbalanceada x Árvore AVL
 - SAT Solver
 - SMT Solver
-- Plotagem de Árvore desbalanceada x Árvore AVL
 - Huffman para compactação de arquivo
 - Seminário sobre máquina de Turing utilizando duas pilhas
 
@@ -24,8 +24,8 @@ O SATSolver implementado é dividido em quatro elementos principais
 
 Exemplo de arquivo de entrada <code>test.cnf</code>:
 
-```bash
-    c 1 variáveis, 2 cláusulas
+```text
+    c 1 variável, 2 cláusulas
     p cnf 1 2
     1 0
    -1 0
@@ -38,11 +38,23 @@ Obviamente, esta fórmula resulta em **UNSAT**.
 
 ### Lógica por traz do algoritmo
 
-O algoritmo realiza o parse do arquivo .cnf e transforma isso em cláusulas, o que gera uma fórmula. A partir disso, é utilizado um array de interpretação utilizando índice base como 0, permitindo que os literais (1, 2, 3) sejam os índices desse array.
+O algoritmo realiza o parse do arquivo .cnf e transforma isso em cláusulas, o que gera uma fórmula. A partir disso, é utilizado um array de interpretação usando índice base como 1, permitindo que os literais (1, 2, 3) sejam os índices desse array.
 Como próximo passo, o sat começa a testar valores para os literais alterando o array de interpretação parcial e montando a árvore de tentativas. Dessa forma, o programa consegue testar os caminhos para tentar verificar se uma fórmula é satisfazível ou não, utilizando como estado para os literais os valores:
 
-```bash
+```text
  1: True
 -1: False
- 0: Unassingned
+ 0: Unassigned
 ```
+
+### Backtracking
+
+O resolvedor utiliza o algoritmo DPLL com um sistema de Backtracking Cronológico via recursão. Em vez de testar todas as combinações possíveis em uma matriz de tabela verdade completa ($\mathcal{O}(2^N)$), o motor avalia a fórmula a cada atribuição parcial. Se a função evaluateFormula detectar que qualquer cláusula tornou-se inteiramente falsa antes de todas as variáveis serem preenchidas, o algoritmo realiza uma poda por conflito: ele limpa os estados locais de volta para 0, aborta a descida naquele ramo e retrocede (backtrack) para tentar outro caminho.
+
+## Contribuição 👨🏽‍💻
+
+1. Helder Nicollas Leão Peixoto
+2. Levy Abreu Cavalcante
+3. Rafael Luiz Bandeira Almeida
+
+**Este readme está em desenvolvimento... 👀**
