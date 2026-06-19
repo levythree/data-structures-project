@@ -18,11 +18,13 @@ Este foi o resultado:
 
 ![Comparativo da plotagem](assets/chart.png)
 
-**Nota-se que a árvore desbalanceada se aproxima de $\mathcal{O}(n^2)$.**
+### Conclusões
 
-**É possível analisar também que a árvore AVL sempre permanece na curva logaritma proposta pela estrutura de dados. $\mathcal{O}(log(n))$**
+1. Nota-se que a árvore desbalanceada se aproxima de $\mathcal{O}(n^2)$.
 
-**Além disso, é interessante destacar o **pico** no fim do gráfico da árvore AVL. Isso acontece porque há uma busca adicional para o valor 32768, uma vez uma árvore completa tem $\mathcal 2^n - 1$ itens.**
+2. É possível analisar também que a árvore AVL sempre permanece na curva logaritma proposta pela estrutura de dados. $\mathcal{O}(log(n))$
+
+3. Além disso, é interessante destacar o _pico_ no fim do gráfico da árvore AVL. Isso acontece porque há uma busca adicional para o valor 32768, uma vez uma árvore completa tem $\mathcal 2^n - 1$ itens.
 
 ## SATSolver
 
