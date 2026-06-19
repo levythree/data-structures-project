@@ -10,6 +10,20 @@ Este repositório contém os seguintes projetos:
 - Huffman para compactação de arquivo
 - Seminário sobre máquina de Turing utilizando duas pilhas
 
+## Plotagem de Árvore desbalanceada x Árvore AVL
+
+Esse projeto foi uma pesquisa a fim de comparar o desempenho de uma árvore binária desbalanceada e uma árvore binária AVL (naturalmente balanceada). Foram utilizados 32768 números distintos (0 <= X <= 32768) inseridos de forma aleatória para ter um teste mais fiel à realidade.
+
+Este foi o resultado:
+
+![Comparativo da plotagem](assets/chart.png)
+
+**Nota-se que a árvore desbalanceada se aproxima de $\mathcal{O}(n^2)$.**
+
+**É possível analisar também que a árvore AVL sempre permanece na curva logaritma proposta pela estrutura de dados. $\mathcal{O}(log(n))$**
+
+**Além disso, é interessante destacar o **pico** no fim do gráfico da árvore AVL. Isso acontece porque há uma busca adicional para o valor 32768, uma vez uma árvore completa tem $\mathcal 2^n - 1$ itens.**
+
 ## SATSolver
 
 SatSolvers são programas que resolvem um problema de satisfabilidade de uma fórmula booleana num formato CNF (Conjuntive Normal Form ou Forma Normal Conjuntiva).
