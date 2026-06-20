@@ -52,7 +52,7 @@ Isso é equivalente a essa fórmula:
 
 Obviamente, esta fórmula resulta em **UNSAT**.
 
-### Lógica por traz do algoritmo
+### Lógica por trás do algoritmo
 
 O algoritmo realiza o parse do arquivo .cnf e transforma isso em cláusulas, o que gera uma fórmula. A partir disso, é utilizado um array de interpretação usando índice base como 1, permitindo que os literais (1, 2, 3) sejam os índices desse array.
 Como próximo passo, o sat começa a testar valores para os literais alterando o array de interpretação parcial e montando a árvore de tentativas. Dessa forma, o programa consegue testar os caminhos para tentar verificar se uma fórmula é satisfazível ou não, utilizando como estado para os literais os valores:
