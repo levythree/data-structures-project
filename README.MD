@@ -67,6 +67,32 @@ Como próximo passo, o sat começa a testar valores para os literais alterando o
 
 O resolvedor utiliza o algoritmo DPLL com um sistema de Backtracking Cronológico via recursão. Em vez de testar todas as combinações possíveis em uma matriz de tabela verdade completa ($\mathcal{O}(2^N)$), o motor avalia a fórmula a cada atribuição parcial. Se a função evaluateFormula detectar que qualquer cláusula tornou-se inteiramente falsa antes de todas as variáveis serem preenchidas, o algoritmo realiza uma poda por conflito: ele limpa os estados locais de volta para 0, aborta a descida naquele ramo e retrocede (backtrack) para tentar outro caminho.
 
+## Huffman
+
+O algoritmo de Huffman é um método de compressão de dados sem perdas baseado na frequência de ocorrência de cada caractere. Caracteres que aparecem com mais frequência recebem códigos binários menores, enquanto os menos frequentes recebem códigos maiores. Isso resulta em uma redução significativa no tamanho final do arquivo.
+
+O compressor implementado utiliza uma abordagem completa, lidando com a leitura bit a bit dos arquivos e garantindo que o arquivo original possa ser perfeitamente reconstruído na descompressão.
+
+### Lógica por trás do algoritmo
+
+A implementação foi modularizada para garantir clareza e manutenção do código. O fluxo de compressão e descompressão se baseia em três pilares principais:
+
+- **Fila de Prioridade (priorityQueue):** Responsável por armazenar e ordenar os nós da árvore com base em suas frequências (do menor para o maior). O custo de inserção para construir a fila dita grande parte da performance do algoritmo.
+
+- **Árvore de Huffman (huffman):** Constrói a árvore unindo os dois nós de menor frequência iterativamente até sobrar apenas a raiz. A partir da árvore montada, é gerado um dicionário que mapeia cada caractere (0 a 255) para sua nova representação em bits. O algoritmo apresenta uma complexidade de tempo de $\mathcal{O}(N \log N)$ para a construção da árvore, onde N é o número de caracteres únicos.
+
+- **Manipulação de Arquivos (fileHandle):** Trabalha com operações em nível de bit (operações bitwise) utilizando máscaras, garantindo que possamos escrever e ler "0"s e "1"s de forma empacotada em bytes (unsigned char).
+
+### Estrutura do Cabeçalho (Header) e Salvamento da Árvore
+
+Para que seja possível descompactar o arquivo no futuro, a própria árvore de Huffman precisa ser salva no arquivo comprimido, além de algumas informações vitais de cabeçalho. O arquivo de saída possui o seguinte formato:
+
+- **Tamanho do Lixo (Trash Size):** Ocupa os primeiros 3 bits do arquivo. Representa os bits extras adicionados ao último byte do arquivo para preenchê-lo, já que só podemos escrever dados em blocos de 8 bits.
+
+- **Tamanho da Árvore (Tree Size):** Ocupa os próximos 13 bits, definindo quantos bytes a árvore ocupará no cabeçalho.
+
+- **Serialização da Árvore:** A árvore é escrita usando percurso em pré-ordem. Nós internos são representados por um asterisco (*). Folhas recebem o caractere original. Caso o próprio caractere seja um asterisco ou uma barra invertida ('\'), ele é escapado com uma barra invertida para evitar colisões durante a remontagem (rebuildTree).
+
 ## Contribuição 👨🏽‍💻
 
 1. Helder Nicollas Leão Peixoto
